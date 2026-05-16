@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医小晨 - 金葡菌记忆宫殿完整题库</title>
+    <style>
+        :root {
+            --primary-color: #6a1b9a;
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --correct-color: #4caf50;
+            --wrong-color: #f44336;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            max-width: 600px;
+            width: 100%;
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #f0f0f0;
+            border-color: #d0d0d0;
+        }
+
+        .option-btn.correct {
+            background-color: #e8f5e9;
+            border-color: var(--correct-color);
+            color: #2e7d32;
+        }
+
+        .option-btn.wrong {
+            background-color: #ffebee;
+            border-color: var(--wrong-color);
+            color: #c62828;
+        }
+
+        .feedback-card {
+            display: none;
+            margin-top: 25px;
+            background-color: #fff9c4;
+            border-left: 5px solid #fbc02d;
+            padding: 20px;
+            border-radius: 8px;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        .feedback-card.show {
+            display: block;
+        }
+
+        .feedback-title {
+            font-weight: bold;
+            color: #f57f17;
+            margin-top: 0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feedback-img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .fact-text {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .metaphor-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary-color);
+            line-height: 1.6;
+        }
+
+        .next-btn {
+            display: none;
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(106, 27, 154, 0.2);
+        }
+
+        .next-btn.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="header">
+            <h1>👑 金葡菌记忆宫殿测试</h1>
+            <div class="progress-text">第 <span id="current-q-num">1</span> / <span id="total-q-num">10</span> 题</div>
+        </div>
+
+        <div id="quiz-content">
+            <div class="question-text" id="question-text">题目加载中...</div>
+            <div class="options-container" id="options-container"></div>
+            
+            <div class="feedback-card" id="feedback-card">
+                <h3 class="feedback-title" id="feedback-title">⚖️ 宫殿解析</h3>
+                <img id="feedback-img" class="feedback-img" src="" alt="宫殿隐喻图">
+                <div class="fact-text" id="fact-text"></div>
+                <div class="metaphor-text" id="metaphor-text"></div>
+            </div>
+
+            <button class="next-btn" id="next-btn" onclick="nextQuestion()">下一题 ➡️</button>
+        </div>
+    </div>
+
+    <script>
+        // 完整的 10 道题库数据
+        const quizData = [
+            {
+                question: "1. 常见的革兰阳性致病性球菌有：",
+                options: ["A. 金黄色葡萄球菌", "B. 大肠杆菌", "C. 丙型链球菌", "D. 脑膜炎球菌", "E. 淋球菌"],
+                correctAnswer: 0, 
+                fact: "医学事实：金黄色葡萄球菌是临床最常见的革兰阳性(G+)球菌。",
+                metaphor: "🏛️ 宫殿隐喻：直接锁定神庙中央王座区。法老身披代表革兰阳性(G+)的紫袍，这就是它的初筛身份卡。",
+                imageUrl: "https://img.cdn1.vip/i/6a0861e278e3f_1778934242.webp" 
+            },
+            {
+                question: "2. 葡萄球菌溶血素对下列哪种细胞损伤作用最强？",
+                options: ["A. 白细胞", "B. 血小板", "C. 红细胞", "D. 肝细胞", "E. 神经细胞"],
+                correctAnswer: 2, 
+                fact: "医学事实：葡萄球菌溶素能破坏红细胞，在血平板上形成完全透明的β溶血环。",
+                metaphor: "🔨 宫殿隐喻：视线移向左侧御膳房。注意看那个疯狂的厨师，他正在用铁锤疯狂砸碎满桌的红气球，这正是溶素破坏红细胞的暴力现场。",
+                imageUrl: "https://img.cdn1.vip/i/6a0861d4c6b13_1778934228.webp"
+            },
+            {
+                question: "3. SPA能与下列哪种物质结合？",
+                options: ["A. 人IgG的Fc段", "B. 人IgG的Fab段", "C. 人IgG1、IgG2、IgG4的Fc段", "D. 人IgM的Fc段", "E. 人IgA的Fc段"],
+                correctAnswer: 0, 
+                fact: "医学事实：葡萄球菌A蛋白(SPA)能与IgG的Fc段结合，导致抗体倒置，从而抵抗吞噬。",
+                metaphor: "🛡️ 宫殿隐喻：翻开档案簿的伪装装甲(SPA)一页。SPA就像法老的一面反向盾牌，专门卡住IgG的Fc段，让免疫系统彻底迷失方向。",
+                imageUrl: "https://img.cdn1.vip/i/6a0861d12ac8c_1778934225.webp"
+            },
+            {
+                question: "4. 葡萄球菌肠毒素的作用机制可能是：",
+                options: ["A. 直接破坏胃肠粘膜细胞，导致腹泻、腹痛", "B. 直接毒害中枢神经，引起食物中毒", "C. 通过刺激呕吐中枢而导致呕吐为主要症状的食物中毒", "D. 直接破坏肠壁血管，导致出血性肠炎", "E. 直接导致肠粘膜细胞分泌功能亢进，引起腹泻"],
+                correctAnswer: 2, 
+                fact: "医学事实：肠毒素耐热，主要通过刺激呕吐中枢，引起短潜伏期的急性胃肠炎（食物中毒），临床以剧烈呕吐为主。",
+                metaphor: "🤮 宫殿隐喻：看看右侧宴会厅那个疯狂呕吐的食客。他吃下了左侧御膳房那个冒着绿光的肠道陶罐里熬制的毒药，毒素直击呕吐中枢，根本止不住。",
+                imageUrl: "https://img.cdn1.vip/i/6a0861d09abed_1778934224.webp" 
+            },
+            {
+                question: "5. 化脓性炎症，其脓汁粘稠、病灶局限，这是由于病菌产生：",
+                options: ["A. 透明质酸酶", "B. 血浆凝固酶", "C. 耐热核酸酶", "D. 链道酶", "E. 葡激酶"],
+                correctAnswer: 1, 
+                fact: "医学事实：凝固酶是鉴定致病性葡萄球菌的最重要指标，它使血浆凝固，形成抗吞噬屏障，导致感染局限。",
+                metaphor: "🧱 宫殿隐喻：答案就在左侧御膳房的桌角。那个凝固成块的红色果冻就是血浆凝固酶的杰作，它像水泥一样把病灶死死局限在原地。",
+                imageUrl: "https://img.cdn1.vip/i/6a0861ced3e71_1778934222.webp" 
+            },
+            {
+                question: "6. 引起烫伤样皮肤综合征的微生物是：",
+                options: ["A. 钩端螺旋体", "B. 衣原体", "C. 产气荚膜杆菌", "D. 炭疽杆菌", "E. 金黄色葡萄球菌"],
+                correctAnswer: 4, 
+                fact: "医学事实：金黄色葡萄球菌产生的表皮剥脱毒素会引起剥脱性皮炎(SSSS烫伤样皮肤综合征)，常见于新生儿。",
+                metaphor: "🧪 宫殿隐喻：调取左侧御膳房的隐藏毒药配方。表皮剥脱毒素就是能让新生儿表皮松解，呈现出“烫伤样”可怕外观的终极毒药。",
+                imageUrl: "https://img.cdn1.vip/i/6a0861c718fb0_1778934215.webp" 
+            },
+            {
+                question: "7. 下列无芽胞的细菌中，抵抗力最强的是：",
+                options: ["A. 乙型溶血性链球菌", "B. 金黄色葡萄球菌", "C. 大肠杆菌", "D. 肺炎球菌", "E. 脑膜炎球菌"],
+                correctAnswer: 1, 
+                fact: "医学事实：金黄色葡萄球菌是无芽孢细菌中抵抗力最强的，耐干燥、耐盐。",
+                metaphor: "🛡️ 宫殿隐喻：档案簿的警告雷达显示，法老拥有最强护盾。在这场没有芽孢的生存游戏中，它的防御力断层领先。",
+                imageUrl: "https://img.cdn1.vip/i/6a0861c64ee90_1778934214.webp" 
+            },
+            {
+                question: "8. 金黄色葡萄球菌一般不引起：",
+                options: ["A. 败血症", "B. 毛囊炎", "C. 食物中毒", "D. 假膜性肠炎", "E. 风湿热"],
+                correctAnswer: 4, 
+                fact: "医学事实：金葡菌主要引起化脓性感染（如毛囊炎、败血症）和毒素性疾病（如食物中毒）。风湿热是A群链球菌感染后的变态反应性疾病。",
+                metaphor: "🐪 宫殿隐喻：巡视整个神庙，金葡菌的杰作全在右侧宴会厅——要么是骆驼火山包(化脓感染)，要么是呕吐食客(中毒)。风湿热这种免疫机制的把戏，不属于法老的作案手法。",
+                imageUrl: "https://img.cdn1.vip/i/6a0861c5c46a1_1778934213.webp" 
+            },
+            {
+                question: "9. 血浆凝固酶是金黄色葡萄球菌产生的侵袭性酶，其主要作用不包括：",
+                options: ["A. 有助于感染扩散", "B. 抗吞噬", "C. 特异识别作用", "D. 菌种鉴别", "E. 刺激产生抗体"],
+                correctAnswer: 0, 
+                fact: "医学事实：凝固酶的作用是使血浆凝固，形成屏障，导致感染局限，而不是扩散。",
+                metaphor: "🧱 宫殿隐喻：再次回想左侧御膳房的红色果冻。既然血浆都已经凝固成硬邦邦的果冻了，细菌怎么可能还会扩散呢？它被自己造的墙困住了。",
+                imageUrl: "https://img.cdn1.vip/i/6a084941d2eb2_1778927937.webp" 
+            },
+            {
+                question: "10. 可引起毒性休克综合征的细菌是：",
+                options: ["A. 肺炎链球菌", "B. 脑膜炎奈瑟菌", "C. 铜绿假单胞菌", "D. 甲型溶血性链球菌", "E. 金黄色葡萄球菌"],
+                correctAnswer: 4, 
+                fact: "医学事实：金黄色葡萄球菌产生的毒性休克综合征毒素-1 (TSST-1)可引起发热、低血压、皮疹及多器官衰竭的毒性休克综合征(TSS)。",
+                metaphor: "☠️ 宫殿隐喻：这是左侧御膳房隐藏的最后一张底牌。TSST-1毒药一出，就会引发高热和多器官衰竭，让整个晚宴陷入休克的死寂。",
+                imageUrl: "https://img.cdn1.vip/i/6a084941d2eb2_1778927937.webp" 
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+
+        const questionTextElement = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackCard = document.getElementById('feedback-card');
+        const imgElement = document.getElementById('feedback-img');
+        const factTextElement = document.getElementById('fact-text');
+        const metaphorTextElement = document.getElementById('metaphor-text');
+        const nextBtn = document.getElementById('next-btn');
+        const currentQNum = document.getElementById('current-q-num');
+        const totalQNum = document.getElementById('total-q-num');
+
+        totalQNum.textContent = quizData.length;
+        loadQuestion();
+
+        function loadQuestion() {
+            feedbackCard.classList.remove('show');
+            nextBtn.classList.remove('show');
+            optionsContainer.innerHTML = '';
+            
+            const currentData = quizData[currentQuestionIndex];
+            currentQNum.textContent = currentQuestionIndex + 1;
+            questionTextElement.textContent = currentData.question;
+
+            currentData.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => checkAnswer(index, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function checkAnswer(selectedIndex, selectedButton) {
+            const currentData = quizData[currentQuestionIndex];
+            const allButtons = optionsContainer.querySelectorAll('.option-btn');
+            
+            allButtons.forEach(btn => btn.disabled = true);
+
+            if (selectedIndex === currentData.correctAnswer) {
+                selectedButton.classList.add('correct');
+                document.getElementById('feedback-title').innerHTML = "✅ 回答正确！重温宫殿记忆：";
+            } else {
+                selectedButton.classList.add('wrong');
+                allButtons[currentData.correctAnswer].classList.add('correct');
+                document.getElementById('feedback-title').innerHTML = "❌ 选错了，快回想这个画面：";
+            }
+
+            if (currentData.imageUrl && currentData.imageUrl !== "") {
+                imgElement.src = currentData.imageUrl;
+                imgElement.style.display = 'block';
+            } else {
+                imgElement.style.display = 'none';
+            }
+
+            factTextElement.textContent = currentData.fact;
+            metaphorTextElement.textContent = currentData.metaphor;
+            feedbackCard.classList.add('show');
+            nextBtn.classList.add('show');
+            
+            if (currentQuestionIndex === quizData.length - 1) {
+                nextBtn.textContent = "🎉 恭喜刷完题库，点击重新开始";
+            } else {
+                nextBtn.textContent = "下一题 ➡️";
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                currentQuestionIndex = 0; 
+                loadQuestion();
+            }
+        }
+    </script>
+</body>
+</html>
