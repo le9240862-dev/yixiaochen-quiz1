@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医小晨 - 鼠疫耶尔森菌 地宫餐厅沉浸版</title>
+    <style>
+        :root {
+            /* 鼠疫耶尔森菌的黑曜石地宫与暗红火把色调 */
+            --primary-color: #b71c1c; /* 代表G-暗红火把的主色 */
+            --primary-light: #ffebee;
+            --primary-dark: #5f0909;
+            --bg-color: #120b0b; /* 黑曜石地宫暗黑背景 */
+            --card-bg: #ffffff;
+            --correct-color: #2e7d32;
+            --wrong-color: #c62828;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-lg: 0 15px 35px rgba(183, 28, 28, 0.2);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s;
+            overflow-x: hidden;
+        }
+
+        /* 狂暴模式与氛围特效（瘟疫暗红心流） */
+        body.fever-mode {
+            background-color: #2a0808;
+            animation: feverPulse 2s infinite alternate;
+        }
+        @keyframes feverPulse {
+            0% { box-shadow: inset 0 0 50px rgba(183, 28, 28, 0.4); }
+            100% { box-shadow: inset 0 0 150px rgba(183, 28, 28, 0.8); }
+        }
+
+        #vfx-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute; background: rgba(183, 28, 28, 0.8);
+            border-radius: 50%; animation: floatUp linear forwards;
+            box-shadow: 0 0 8px rgba(255, 100, 100, 0.8);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        .app-container {
+            max-width: 600px; width: 100%; background-color: var(--card-bg);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+            overflow: hidden; position: relative; z-index: 10;
+        }
+
+        /* 物理震动反馈 */
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* Boss 血条与 Combo UI */
+        .rpg-header {
+            background-color: #1a0a0a; padding: 15px 20px; display: none;
+            flex-direction: column; gap: 8px; border-bottom: 3px solid #000;
+        }
+        .boss-info { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 14px; }
+        .hp-bar-bg { width: 100%; height: 14px; background-color: #3d1c1c; border-radius: 7px; overflow: hidden; border: 1px solid #000; }
+        .hp-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #d32f2f, #b71c1c); width: 100%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(183, 28, 28, 0.8);
+        }
+        .combo-text {
+            color: #ffeb3b; font-style: italic; font-size: 14px; font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s;
+        }
+        .combo-text.show { opacity: 1; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .content-padding { padding: 30px; }
+        .section-title { color: var(--primary-dark); font-size: 22px; margin-bottom: 20px; text-align: center; font-weight: 800; }
+        
+        /* 视频跳转引导卡片 */
+        .video-banner {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+        .video-banner:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(183, 28, 28, 0.25);
+        }
+        .video-banner-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .video-title {
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-size: 15px;
+        }
+        .video-desc {
+            font-size: 13px;
+            color: #555;
+        }
+        .video-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(183, 28, 28, 0.3);
+            transition: background 0.2s;
+        }
+        .video-banner:hover .video-btn {
+            background: var(--primary-dark);
+        }
+
+        .panorama-img { width: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: 20px; display: block; min-height: 180px; background-color: var(--primary-light); object-fit: cover; }
+
+        /* 结构化介绍区块 */
+        .feature-block {
+            text-align: left; background: #fff; padding: 15px; border-radius: 10px;
+            margin-bottom: 15px; border: 1px solid #eee;
+        }
+        .feature-title { font-weight: bold; color: var(--primary-dark); margin-bottom: 5px; font-size: 15px; }
+        .feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dashed #eee; }
+        .timer-badge { background-color: var(--primary-light); color: var(--primary-dark); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; }
+        .timer-badge.danger { background-color: #fde8e8; color: var(--wrong-color); animation: pulse 1s infinite; }
+        
+        /* 题干与选项样式 */
+        .question-text { font-size: 18px; font-weight: 500; margin-bottom: 25px; line-height: 1.6; color: #34495e; }
+        .q-hl { 
+            font-weight: 800; color: #000; 
+            background: linear-gradient(120deg, rgba(183, 28, 28, 0.2) 0%, rgba(183, 28, 28, 0.2) 100%);
+            background-repeat: no-repeat; background-size: 100% 40%; background-position: 0 88%;
+            padding: 0 2px;
+        }
+
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background-color: #fff; border: 2px solid #eaeded; border-radius: var(--radius-md); padding: 16px 20px; font-size: 16px; color: var(--text-main); text-align: left; cursor: pointer; transition: all 0.2s ease; font-weight: 500;}
+        .option-btn:hover:not(:disabled) { border-color: var(--primary-color); background-color: var(--primary-light); transform: translateY(-2px); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; transform: none; }
+        .option-btn.correct { background-color: #e8f5e9; border-color: var(--correct-color); color: #1b5e20; font-weight: bold; }
+        .option-btn.wrong { background-color: #ffebee; border-color: var(--wrong-color); color: #b71c1c; }
+
+        /* 刮刮乐线索 */
+        .hint-btn {
+            background: none; border: 1px dashed var(--primary-color); color: var(--primary-color);
+            padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; 
+            width: 100%; margin-top: 15px; transition: 0.2s; display: none;
+        }
+        .hint-btn:hover { background: var(--primary-light); }
+        .hint-img-container { display: none; margin-top: 15px; position: relative; border-radius: 8px; overflow: hidden; }
+        .hint-img { width: 100%; filter: blur(15px); transition: filter 0.3s; }
+        .hint-img.revealed { filter: blur(0); }
+        .hint-overlay-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 20px; pointer-events: none; }
+
+        /* 解析区 */
+        .feedback-card { display: none; margin-top: 25px; background-color: var(--card-bg); border: 2px solid var(--primary-light); padding: 20px; border-radius: var(--radius-md); position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.03); animation: slideUpFade 0.5s forwards; }
+        .feedback-card::before { content: ''; position: absolute; left: -2px; top: -2px; bottom: -2px; width: 6px; background-color: var(--primary-color); border-radius: 10px 0 0 10px; }
+        .feedback-card.show { display: block; }
+        .feedback-img { width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; }
+        
+        .highlight { color: var(--primary-color); font-weight: bold; background: var(--primary-light); padding: 2px 6px; border-radius: 4px; margin: 0 2px; }
+        .fact-text { font-size: 15px; color: #455a64; margin-bottom: 12px; line-height: 1.7; background-color: #f5f7fa; padding: 12px 15px; border-radius: 8px; }
+        .metaphor-text { font-size: 15px; color: #333; line-height: 1.7; padding: 0 5px; }
+        
+        .retry-warning { display: none; margin-top: 15px; padding: 10px; border-radius: 8px; background-color: #fff3e0; color: #e65100; font-size: 14px; font-weight: bold; text-align: center; }
+
+        /* 错题画廊 */
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
+        .gallery-item { perspective: 1000px; cursor: pointer; height: 160px; }
+        .gallery-inner { width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; border-radius: 12px; box-shadow: var(--shadow-sm); }
+        .gallery-item:hover .gallery-inner { box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .gallery-item.flipped .gallery-inner { transform: rotateY(180deg); }
+        
+        .gallery-front, .gallery-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 12px; overflow: hidden; }
+        .gallery-front { background-size: cover; background-position: center; filter: grayscale(100%) brightness(0.7); transition: filter 0.3s; display: flex; align-items: center; justify-content: center; }
+        .gallery-front::after { content: '点击翻转 🔄'; color: white; background: rgba(183, 28, 28, 0.85); padding: 8px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .gallery-item.flipped .gallery-front { filter: grayscale(0%) brightness(1); } 
+        
+        .gallery-back { background-color: var(--primary-light); transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 2px solid var(--primary-color); }
+        .gallery-back-title { font-size: 13px; font-weight: bold; color: var(--primary-dark); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .gallery-back-desc { font-size: 12px; color: var(--text-main); line-height: 1.5; }
+
+        .primary-btn { width: 100%; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(183, 28, 28, 0.3); margin-top: 15px; }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(183, 28, 28, 0.4); }
+        
+        .secondary-btn { background: #f1f3f5; color: #555; box-shadow: none; margin-top: 10px; font-size: 15px; padding: 14px;}
+        .secondary-btn:hover { background: #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transform: translateY(-1px); }
+
+        .hidden { display: none !important; }
+
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="vfx-layer"></div>
+
+    <div class="app-container" id="main-container">
+        <div class="rpg-header" id="rpg-header">
+            <div class="boss-info">
+                <span>👑 鼠疫耶尔森大魔王</span>
+                <span class="combo-text" id="combo-text">Combo x3! 🔥</span>
+                <span>剩余HP: <span id="hp-text">12</span></span>
+            </div>
+            <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-bar"></div></div>
+        </div>
+
+        <div id="intro-screen" class="content-padding">
+            <h1 class="section-title">🍽️ 黑曜石地宫攻防战：鼠疫耶尔森菌</h1>
+
+            <a href="http://xhslink.com/o/AUNaXVpzRtL" class="video-banner" target="_blank">
+                <div class="video-banner-content">
+                    <span class="video-title">▶️ 建议先花3分钟看下这期【鼠疫菌地宫餐厅记忆电影】</span>
+                    <span class="video-desc">终极记忆宫殿视觉植入，看完了再来砍Boss体验翻倍哦！</span>
+                </div>
+                <span class="video-btn">去小红书观看 ↗</span>
+            </a>
+
+            <img class="panorama-img" id="intro-panorama" src="https://img.cdn1.vip/i/6a0e8009882fc_1779335177.webp" alt="鼠疫菌全景图">
+
+            <div class="feature-block">
+                <div class="feature-title">📚 笨功夫攒的题库</div>
+                <div class="feature-desc">深度融合学校经典期末真题与执医高频真题，专门挑出了最刁钻的“钟乳石征”、“R型菌落”、“27度最适温度”等核心考点，高频轰炸记忆！</div>
+            </div>
+            <div class="feature-block">
+                <div class="feature-title">⚡️ 沉浸式心流引擎</div>
+                <div class="feature-desc">15秒限时强刺激，忘词了可以消耗 Combo 刮开地宫餐厅场景线索。用最硬核的游戏机制，把死考点刻进你的视网膜 ୧⍢⃝୨</div>
+            </div>
+
+            <button class="primary-btn" onclick="startQuiz()" style="margin-top: 10px;">开启地宫大捷 ⚔️</button>
+        </div>
+
+        <div id="quiz-screen" class="content-padding hidden">
+            <div class="header-info">
+                <span style="font-weight: bold; color: var(--primary-color);">🎯 自然疫源高频考点</span>
+                <div class="timer-badge" id="timer-badge">⏳ <span id="time-left">15</span>s</div>
+            </div>
+
+            <div class="question-text" id="question-text">题目加载中...</div>
+            <div class="options-container" id="options-container"></div>
+            
+            <button class="hint-btn" id="hint-btn" onclick="useHint()">🔍 消耗 1 Combo 刮开地宫场景线索</button>
+            <div class="hint-img-container" id="hint-container">
+                <img class="hint-img" id="hint-img" src="">
+                <div class="hint-overlay-text" id="hint-overlay">地宫线索已显现 (3秒后重回黑暗)</div>
+            </div>
+
+            <div class="feedback-card" id="feedback-card">
+                <img id="feedback-img" class="feedback-img" src="">
+                <div class="fact-text" id="fact-text"></div>
+                <div class="metaphor-text" id="metaphor-text"></div>
+                <div class="retry-warning" id="retry-warning"></div>
+                <button class="primary-btn" id="next-btn" onclick="nextQuestion()">继续追击 ➡️</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="content-padding hidden">
+            <h1 class="section-title">🎉 地宫领主已击杀！</h1>
+            <p class="section-subtitle" id="gallery-subtitle" style="margin-bottom: 15px;">以下是你被瘟疫吞噬的灰暗碎片。点击图片，重新激活黑曜石记忆锚点。</p>
+            
+            <div class="gallery-grid" id="wrong-gallery"></div>
+
+            <button class="primary-btn" onclick="goToNext()">🗺️ 开启下一战役</button>
+            <button class="primary-btn secondary-btn" onclick="restartQuiz()">🔄 重新挑战当前关卡</button>
+
+            <p style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 20px;">
+                黑曜石地宫的记忆钥匙已熔炼完成。高频重点已全面转化为你的肌肉记忆。
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // 👁️ 鼠疫耶尔森菌·专属完全体视觉题库
+        var originalQuizData = [
+            {
+                id: 0,
+                question: "1. 菌体呈卵圆形，<span class='q-hl'>两端浓染</span>的革兰阴性(G-)短小杆菌是：",
+                options: ["A. 炭疽芽胞杆菌", "B. 白喉棒状杆菌", "C. 结核分枝杆菌", "D. 鼠疫耶尔森菌", "E. 肺炎链球菌"],
+                correctAnswer: 3, 
+                fact: "🎯 核心事实：鼠疫耶尔森菌典型的形态特征是两端钝圆、<span class='highlight'>两极浓染</span>的卵圆形革兰阴性(G-)短小杆菌。",
+                metaphor: "📌 视觉锚定：看【A区实验室特征】。餐桌上放着<span class='highlight'>两头涂抹浓厚红漆的安全别针</span>餐具！两端深染、中间浅染，活脱脱就是一枚安全别针！整个地宫笼罩着<span class='highlight'>暗红色火把光芒</span>，代表革兰阴性(G-)。",
+                imageUrl: "https://img.cdn1.vip/i/6a0e7eb413e16_1779334836.webp" 
+            },
+            {
+                id: 1,
+                question: "2. 在正常情况下，<span class='q-hl'>有毒株</span>细菌在普通培养基上形成的是：",
+                options: ["A. S型菌落", "B. M型菌落", "C. R型菌落", "D. 混合型菌落", "E. L型缺陷菌落"],
+                correctAnswer: 2, 
+                fact: "🎯 核心事实：与其他大多数病原菌不同，鼠疫耶尔森菌的<span class='highlight'>有毒株形成的是粗糙的R型菌落</span>。",
+                metaphor: "📌 视觉锚定：锁定地宫中央的餐桌。别针和汤周围的环境非常<span class='highlight'>粗糙、凹凸不平（Rough）</span>。记住这只戴着毒力盔甲的有毒鼠领主，它最喜欢坐在**粗糙（R型）的黑曜石板**上用餐，反其道而行之！",
+                imageUrl: "https://img.cdn1.vip/i/6a0e7eb41556f_1779334836.webp"
+            },
+            {
+                id: 2,
+                question: "3. 鼠疫耶尔森菌在液体培养基中生长48小时，最突出的<span class='q-hl'>特殊培养特性</span>是：",
+                options: ["A. 均匀浑浊生长", "B. 形成“钟乳石状”沉淀", "C. 产生深蓝色色素", "D. 表面形成厚假膜不自溶", "E. 沉淀生长，液体完全澄清"],
+                correctAnswer: 1, 
+                fact: "🎯 核心事实：鼠疫杆菌在液体培养基中生长可形成菌膜，轻摇培养瓶，菌膜呈<span class='highlight'>“钟乳石”状下沉</span>，这是极其重要的实验室鉴定特征。",
+                metaphor: "📌 视觉锚定：看中央餐桌上正对着的头顶！那里有一碗<span class='highlight'>摇晃后断裂下沉的钟乳石汤</span>！液体里轻摇就会形成钟乳石状的断裂下沉，是极其高频的标志性考点！",
+                imageUrl: "https://img.cdn1.vip/i/6a0e7f685e07b_1779335016.webp"
+            },
+            {
+                id: 3,
+                question: "4. 鼠疫耶尔森菌与一般病原菌相比，最突出的其<span class='q-hl'>最适生长温度</span>是：",
+                options: ["A. 37℃", "B. 35~37℃", "C. 27~30℃", "D. 20~25℃", "E. 42℃"],
+                correctAnswer: 2, 
+                fact: "🎯 核心事实：鼠疫杆菌最突出的培养特性之一是其最适生长温度为<span class='highlight'>27~30℃</span>，而非一般病原菌的37℃。",
+                metaphor: "📌 视觉锚定：为什么餐厅要在阴冷深邃的【黑曜石地宫】里？因为地宫里冷飕飕的，温度远低于人体37℃，只有**27~30℃**！在这种特立独行的“低温地宫”里，头顶的钟乳石才能长出来！",
+                imageUrl: "https://img.cdn1.vip/i/6a0e7eb4a214d_1779334836.webp" 
+            },
+            {
+                id: 4,
+                question: "5. 鼠疫耶尔森菌最主要、最核心的<span class='q-hl'>抗吞噬毒力因子</span>是：",
+                options: ["A. 鼠毒素", "B. V/W抗原", "C. F1荚膜抗原", "D. 内毒素", "E. 外膜蛋白"],
+                correctAnswer: 2, 
+                fact: "🎯 核心事实：<span class='highlight'>F1荚膜抗原</span>是鼠疫耶尔森菌最主要的毒力因子，由质粒编码，具有极强的抗吞噬作用。",
+                metaphor: "📌 视觉锚定：瞅瞅餐桌中央坐着的鼠领主！它身上穿着一件<span class='highlight'>刻有编号的 F1 透明盔甲</span>！盔甲提供了绝对防御，专门克制白细胞的吞噬，是它的终极毒力护盾！",
+                imageUrl: "https://img.cdn1.vip/i/6a0e7eb526827_1779334837.webp" 
+            },
+            {
+                id: 5,
+                question: "6. 鼠疫耶尔森菌产生的鼠毒素（Murine Toxin）其<span class='q-hl'>特征与机制</span>是：",
+                options: ["A. 属于内毒素，成分是脂多糖", "B. 菌细胞裂解或自溶才能释放，作用于机体血管系统引起休克", "C. 可以用甲醛脱毒制备类毒素", "D. 染色体编码的毒素，免疫动物不能产生抗毒素", "E. 引起急性的剧烈肠道分泌亢进"],
+                correctAnswer: 1, 
+                fact: "🎯 核心事实：鼠毒素控制在质粒上，只有当<span class='highlight'>菌细胞裂解或自溶才能释放</span>，主要<span class='highlight'>作用于机体血管系统</span>，引起不可逆休克和死亡。",
+                metaphor: "📌 视觉锚定：鼠领主的盔甲虽然抗吞噬，但如果被打破、**菌体裂解自溶**，就会释放出压箱底的“鼠毒素”，就像餐桌上翻倒的剧毒红酒，瞬间让周围人的**血管崩溃、陷入死寂休克**。",
+                imageUrl: "https://img.cdn1.vip/i/6a0e7fa1eeda1_1779335073.webp" 
+            },
+            {
+                id: 6,
+                question: "7. 下列归属于<span class='q-hl'>自然疫源性烈性传染病</span>的病原体是：",
+                options: ["A. 白喉棒状杆菌", "B. 霍乱弧菌", "C. 结核分枝杆菌", "D. 细菌性痢疾", "E. 鼠疫耶尔森菌"],
+                correctAnswer: 4, 
+                fact: "🎯 核心事实：鼠疫属于国际检疫传染病，也是典型的<span class='highlight'>自然疫源性传染病</span>（甲类传染病）。",
+                metaphor: "📌 视觉锚定：转头看左侧【B区流行病学防线】。整个区域都打着自然疫源的标签，野外老鼠和跳蚤肆虐。地宫本身就是一个隐蔽的“自然疫源”据点，专门向人类输出烈性瘟疫。",
+                imageUrl: "https://img.cdn1.vip/i/6a0e7fa2205de_1779335074.webp" 
+            },
+            {
+                id: 7,
+                question: "8. 鼠疫耶尔森菌的核心<span class='q-hl'>传播媒介</span>是：",
+                options: ["A. 鼠虱", "B. 鼠蚤", "C. 恙螨", "D. 蜱虫", "E. 蚊子"],
+                correctAnswer: 1, 
+                fact: "🎯 核心事实：鼠疫的储存宿主主要是啮齿动物（野鼠与家鼠），而最核心的传播媒介是<span class='highlight'>鼠蚤</span>，经蚤叮咬传播给人。",
+                metaphor: "📌 视觉锚定：看【B区】地上，有几只<span class='highlight'>挥舞着吸血针头、骑着老鼠的巨大跳蚤</span>！这些跳蚤就是核心的传播快递员，通过叮咬把毒素送给人类。",
+                imageUrl: "https://img.cdn1.vip/i/6a0e7fa244426_1779335074.webp" 
+            },
+            {
+                id: 8,
+                question: "9. 临床最常见、表现为急性剧烈疼痛的<span class='q-hl'>淋巴结炎</span>的鼠疫临床分型是：",
+                options: ["A. 肺鼠疫", "B. 败血症型鼠疫", "C. 腺鼠疫", "D. 肠鼠疫", "E. 肾鼠疫"],
+                correctAnswer: 2, 
+                fact: "🎯 核心事实：<span class='highlight'>腺鼠疫</span>是临床最常见的类型，表现为急性的淋巴结炎，伴随剧烈疼痛与高热，多见于腹股沟和腋下。",
+                metaphor: "📌 视觉锚定：转到右侧【C区临床病区】。看第一个食客，他正痛苦地<span class='highlight'>捂着肿大如拳头的腋下与腹股沟</span>，这就是典型的腺鼠疫，淋巴结肿大如腺体！",
+                imageUrl: "https://img.cdn1.vip/i/6a0e7fa292dc4_1779335074.webp" 
+            },
+            {
+                id: 9,
+                question: "10. 真实伤害最高、传染性最强、皮肤出现大片黑紫色瘀斑，被称为<span class='q-hl'>“黑死病”</span>的临床分型是：",
+                options: ["A. 腺鼠疫", "B. 肺鼠疫", "C. 肠鼠疫", "D. 脑膜炎鼠疫", "E. 肾鼠疫"],
+                correctAnswer: 1, 
+                fact: "🎯 核心事实：<span class='highlight'>肺鼠疫</span>传染性最强、死亡率极高，表现为高热、咯血，患者临终前因缺氧和出血导致皮肤呈现黑紫色，故称“黑死病”。",
+                metaphor: "📌 视觉锚定：看【C区】餐桌旁第二个座位上那个<span class='highlight'>疯狂咯血、全身黑紫色的幽灵食客</span>！它因肺部严重受损、缺氧出血化为黑紫色，完美呼应历史上恐怖的“黑死病”肺鼠疫！",
+                imageUrl: "https://img.cdn1.vip/i/6a0e7fa36f8d6_1779335075.webp" 
+            },
+            {
+                id: 10,
+                question: "11. 进行鼠疫特异性预防接种时，角落里贴着标签的活体急急救箱代表：",
+                options: ["A. 鼠疫杆菌类毒素", "B. 鼠疫抗毒素血清", "C. 无毒株 EV 活疫苗", "D. 死菌苗", "E. 基因重组荚膜抗原疫苗"],
+                correctAnswer: 2, 
+                fact: "🎯 核心事实：鼠疫特异性预防接种使用的是无毒株<span class='highlight'>EV活疫苗</span>（减毒活疫苗），能有效建立免疫屏障。",
+                metaphor: "📌 视觉锚定：拉回左侧角落！那堆物资里放着一个<span class='highlight'>贴有 EV 标签的活体急救箱</span>！EV 标签就是无毒株 EV 活疫苗（减毒活疫苗）的视觉铁证！",
+                imageUrl: "https://img.cdn1.vip/i/6a0e7fa2ac93b_1779335074.webp" 
+            },
+            {
+                id: 11,
+                question: "12. 早期、足量使用，作为治疗鼠疫核心抗生素方案的首选药物是：",
+                options: ["A. 青霉素", "B. 红霉素", "C. 链霉素", "D. 头孢曲松", "E. 阿奇霉素"],
+                correctAnswer: 2, 
+                fact: "🎯 核心事实：早期、足量使用<span class='highlight'>链霉素（Streptomycin）</span>是治疗鼠疫的核心首选特效抗生素方案。",
+                metaphor: "📌 视觉锚定：看最右侧的骑士守卫！他正在疯狂演奏一架<span class='highlight'>射出致命音符的长链条琴</span>！长链条琴谐音 **Streptomycin（链霉素）**，专门用来精准射杀、净化眼前的瘟疫大魔王！",
+                imageUrl: "https://img.cdn1.vip/i/6a0e7fa3ca702_1779335075.webp" 
+            }
+        ];
+
+        var CustomMedia = {
+            introImage: "https://img.cdn1.vip/i/6a0e8009882fc_1779335177.webp", 
+            bgm: "",        
+            correct: "",    
+            wrong: "",      
+            fever: "",      
+            win: ""         
+        };
+
+        // 全局核心引擎状态
+        var workingQueue = []; 
+        var currentIndex = 0;
+        var hitsRemaining = 12;
+        var combo = 0;
+        var timerInterval = null;
+        var timeLeft = 15;
+        var wrongHistory = new Set(); 
+
+        var audioCtx = null;
+        var bgmInterval = null;
+        var isBgmPlaying = false;
+        var customBgmAudio = null;
+
+        function initAudio() { 
+            if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+            if(audioCtx.state === 'suspended') { audioCtx.resume(); } 
+        }
+
+        function startBGM() {
+            if(isBgmPlaying) return;
+            isBgmPlaying = true;
+            if (!audioCtx) return;
+            var tick = 0;
+            bgmInterval = setInterval(function() {
+                if(audioCtx.state === 'suspended') return;
+                var osc = audioCtx.createOscillator(); 
+                var gain = audioCtx.createGain();
+                osc.connect(gain); 
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                if(tick % 4 === 0) { 
+                    osc.frequency.setValueAtTime(100, audioCtx.currentTime); 
+                    osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1); 
+                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                } else { 
+                    osc.frequency.setValueAtTime(140, audioCtx.currentTime); 
+                    osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.05); 
+                    gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                }
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start(audioCtx.currentTime); 
+                osc.stop(audioCtx.currentTime + 0.1);
+                tick++;
+            }, 600); 
+        }
+
+        function stopBGM() {
+            isBgmPlaying = false;
+            if(bgmInterval) { clearInterval(bgmInterval); }
+        }
+
+        function playTone(type) {
+            if(!audioCtx) return;
+            var osc = audioCtx.createOscillator(); 
+            var gain = audioCtx.createGain();
+            osc.connect(gain); 
+            gain.connect(audioCtx.destination);
+            if(type === 'correct') { 
+                osc.type = 'sine'; 
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+                osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); 
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); 
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+            } else if (type === 'wrong') { 
+                osc.type = 'sawtooth'; 
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime); 
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3); 
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); 
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+            } else if (type === 'fever') { 
+                osc.type = 'square'; 
+                osc.frequency.setValueAtTime(1200, audioCtx.currentTime); 
+                osc.frequency.exponentialRampToValueAtTime(2400, audioCtx.currentTime + 0.1); 
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4); 
+                osc.start(); osc.stop(audioCtx.currentTime + 0.4); 
+            }
+        }
+
+        var particleInterval = null;
+        function startFeverVFX() {
+            var vfxLayer = document.getElementById('vfx-layer');
+            if(particleInterval || !vfxLayer) return;
+            particleInterval = setInterval(function() {
+                var p = document.createElement('div'); p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+                p.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                vfxLayer.appendChild(p);
+                setTimeout(function() { p.remove(); }, 3500);
+            }, 150);
+        }
+
+        function stopFeverVFX() { 
+            clearInterval(particleInterval); particleInterval = null; 
+            var vfxLayer = document.getElementById('vfx-layer');
+            if(vfxLayer) vfxLayer.innerHTML = ''; 
+        }
+
+        function triggerWinVFX() {
+            var vfxLayer = document.getElementById('vfx-layer');
+            if(!vfxLayer) return;
+            for(var i=0; i<40; i++) {
+                var p = document.createElement('div'); p.className = 'particle';
+                p.style.left = 50 + (Math.random() * 20 - 10) + '%'; 
+                p.style.top = 50 + (Math.random() * 20 - 10) + '%';
+                p.style.width = p.style.height = (Math.random() * 6 + 3) + 'px';
+                p.style.backgroundColor = 'hsl(' + (Math.random() * 30) + ', 100%, 50%)'; 
+                p.style.transform = 'translate(' + (Math.random()*200-100) + 'px, ' + (Math.random()*200-100) + 'px)';
+                p.style.animation = 'floatUp 2s cubic-bezier(0.25, 1, 0.5, 1) forwards';
+                vfxLayer.appendChild(p);
+            }
+        }
+
+        // 全局核心点击暴露，打破任何深层调用闭包死锁
+        function startQuiz() {
+            initAudio(); 
+            startBGM(); 
+            workingQueue = [];
+            for(var i=0; i<originalQuizData.length; i++) {
+                workingQueue.push(originalQuizData[i]);
+            }
+            hitsRemaining = originalQuizData.length;
+            currentIndex = 0; 
+            combo = 0; 
+            wrongHistory.clear();
+            
+            updateUI();
+            document.getElementById('intro-screen').classList.add('hidden'); 
+            document.getElementById('end-screen').classList.add('hidden'); 
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('rpg-header').style.display = 'flex';
+            loadQuestion();
+        }
+
+        function restartQuiz() {
+            if(timerInterval) { clearInterval(timerInterval); }
+            stopBGM(); 
+            stopFeverVFX();
+            workingQueue = [];
+            for(var i=0; i<originalQuizData.length; i++) {
+                workingQueue.push(originalQuizData[i]);
+            }
+            hitsRemaining = originalQuizData.length;
+            currentIndex = 0; 
+            combo = 0; 
+            wrongHistory.clear();
+
+            document.getElementById('hp-bar').style.width = '100%'; 
+            document.getElementById('hp-text').innerText = hitsRemaining;
+            document.getElementById('combo-text').classList.remove('show'); 
+            document.body.classList.remove('fever-mode');
+            document.getElementById('feedback-card').classList.remove('show'); 
+            document.getElementById('hint-container').style.display = 'none'; 
+            document.getElementById('hint-btn').style.display = 'none';
+            
+            document.getElementById('end-screen').classList.add('hidden'); 
+            document.getElementById('quiz-screen').classList.add('hidden'); 
+            document.getElementById('rpg-header').style.display = 'none';
+            document.getElementById('intro-screen').classList.remove('hidden');
+        }
+
+        function goToNext() {
+            window.location.href = "#"; 
+        }
+
+        function updateUI() {
+            document.getElementById('hp-text').innerText = hitsRemaining;
+            document.getElementById('hp-bar').style.width = ((hitsRemaining / originalQuizData.length) * 100) + '%';
+            var comboText = document.getElementById('combo-text');
+            if(combo > 0) {
+                comboText.innerText = 'Combo x' + combo + '! 🔥'; 
+                comboText.classList.add('show');
+                if(combo >= 3) { 
+                    document.body.classList.add('fever-mode'); 
+                    startFeverVFX(); 
+                }
+            } else {
+                comboText.classList.remove('show'); 
+                document.body.classList.remove('fever-mode'); 
+                stopFeverVFX();
+            }
+        }
+
+        function startTimer() {
+            if(timerInterval) { clearInterval(timerInterval); }
+            timeLeft = 15; 
+            document.getElementById('time-left').innerText = timeLeft;
+            var timerBadge = document.getElementById('timer-badge');
+            timerBadge.classList.remove('danger');
+            
+            timerInterval = setInterval(function() {
+                timeLeft--; 
+                document.getElementById('time-left').innerText = timeLeft;
+                if(timeLeft <= 5) { timerBadge.classList.add('danger'); }
+                if(timeLeft <= 0) { 
+                    clearInterval(timerInterval); 
+                    handleTimeout(); 
+                }
+            }, 1000);
+        }
+
+        function loadQuestion() {
+            document.getElementById('feedback-card').classList.remove('show'); 
+            document.getElementById('retry-warning').style.display = 'none'; 
+            document.getElementById('hint-container').style.display = 'none'; 
+            
+            var currentQ = workingQueue[currentIndex];
+            document.getElementById('question-text').innerHTML = currentQ.question;
+            
+            var hintBtn = document.getElementById('hint-btn');
+            if (combo >= 1 && currentQ.imageUrl) {
+                hintBtn.style.display = 'block'; 
+                hintBtn.innerText = '🔍 消耗 1 Combo 刮开视觉线索 (当前 x' + combo + ')';
+            } else {
+                hintBtn.style.display = 'none';
+            }
+
+            var optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            for(var i=0; i<currentQ.options.length; i++) {
+                (function(idx){
+                    var btn = document.createElement('button'); 
+                    btn.innerText = currentQ.options[idx]; 
+                    btn.className = 'option-btn';
+                    btn.onclick = function() { resolveAnswer(idx, btn); };
+                    optionsContainer.appendChild(btn);
+                })(i);
+            }
+            startTimer();
+        }
+
+        function useHint() {
+            if (combo < 1) return;
+            combo--; 
+            updateUI();
+            document.getElementById('hint-btn').style.display = 'none'; 
+            document.getElementById('hint-container').style.display = 'block';
+            var hintImg = document.getElementById('hint-img');
+            hintImg.src = workingQueue[currentIndex].imageUrl; 
+            hintImg.classList.add('revealed');
+            setTimeout(function() { hintImg.classList.remove('revealed'); }, 3000);
+        }
+
+        function handleTimeout() {
+            var currentQ = workingQueue[currentIndex];
+            var optionsButtons = document.querySelectorAll('.option-btn');
+            for(var i=0; i<optionsButtons.length; i++) { optionsButtons[i].disabled = true; }
+            optionsButtons[currentQ.correctAnswer].classList.add('correct');
+            processResult(false, currentQ);
+        }
+
+        function resolveAnswer(idx, btn) {
+            if(timerInterval) { clearInterval(timerInterval); }
+            var currentQ = workingQueue[currentIndex];
+            var optionsButtons = document.querySelectorAll('.option-btn');
+            for(var i=0; i<optionsButtons.length; i++) { optionsButtons[i].disabled = true; }
+            document.getElementById('hint-btn').style.display = 'none';
+
+            var isCorrect = (idx === currentQ.correctAnswer);
+            if (isCorrect) {
+                btn.classList.add('correct');
+            } else { 
+                btn.classList.add('wrong'); 
+                optionsButtons[currentQ.correctAnswer].classList.add('correct'); 
+            }
+            processResult(isCorrect, currentQ);
+        }
+
+        function processResult(isCorrect, q) {
+            var retryWarning = document.getElementById('retry-warning');
+            var msg = "";
+            if (isCorrect) {
+                hitsRemaining--; 
+                combo++; 
+                playTone(combo >= 3 ? 'fever' : 'correct');
+                msg = "✅ 成功削减鼠疫魔王血量！记忆矩阵充能中！";
+                retryWarning.style.color = "#1b5e20"; 
+                retryWarning.style.background = "#e8f5e9";
+            } else {
+                combo = 0; 
+                wrongHistory.add(q.id); 
+                var mainContainer = document.getElementById('main-container');
+                mainContainer.className = 'app-container shake'; 
+                setTimeout(function() { mainContainer.className = 'app-container'; }, 400);
+                workingQueue.push(q); 
+                playTone('wrong');
+                msg = "❌ 地宫迷雾重燃，该考点重回队伍末尾！准备再次追击！";
+                retryWarning.style.color = "#b71c1c"; 
+                retryWarning.style.background = "#ffebee";
+            }
+
+            updateUI();
+            document.getElementById('fact-text').innerHTML = q.fact;
+            document.getElementById('metaphor-text').innerHTML = q.metaphor;
+            var fbImg = document.getElementById('feedback-img');
+            if (q.imageUrl) { 
+                fbImg.src = q.imageUrl; 
+                fbImg.style.display = 'block'; 
+            } else { 
+                fbImg.style.display = 'none'; 
+            }
+            
+            retryWarning.innerText = msg; 
+            retryWarning.style.display = 'block';
+            document.getElementById('feedback-card').classList.add('show');
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if (hitsRemaining > 0 && currentIndex < workingQueue.length) { 
+                loadQuestion(); 
+            } else {
+                playTone('win'); 
+                stopBGM(); 
+                stopFeverVFX(); 
+                triggerWinVFX(); 
+                document.body.classList.remove('fever-mode');
+                setTimeout(function() {
+                    document.getElementById('quiz-screen').classList.add('hidden'); 
+                    document.getElementById('rpg-header').style.display = 'none';
+                    generateGallery(); 
+                    document.getElementById('end-screen').classList.remove('hidden');
+                }, 400);
+            }
+        }
+
+        function generateGallery() {
+            var wrongGallery = document.getElementById('wrong-gallery');
+            if(!wrongGallery) return;
+            wrongGallery.innerHTML = ''; 
+            var subtitle = document.getElementById('gallery-subtitle');
+            if (wrongHistory.size === 0) {
+                subtitle.innerHTML = "<span style='color: var(--correct-color); font-weight: bold;'>🌟 完美无瑕！你成功抵御了整场黑死病的视觉入侵，无遗忘碎片！</span>";
+                return;
+            }
+            subtitle.innerHTML = '以下是你被黑死病侵蚀的 <b style="color:var(--primary-color)">' + wrongHistory.size + '</b> 处破损碎片。点击翻转重新点亮锚点：';
+            
+            wrongHistory.forEach(function(id) {
+                var q = null;
+                for(var i=0; i<originalQuizData.length; i++) {
+                    if(originalQuizData[i].id === id) { q = originalQuizData[i]; break; }
+                }
+                if (!q || !q.imageUrl) return;
+                var card = document.createElement('div'); 
+                card.className = 'gallery-item';
+                card.innerHTML = '<div class="gallery-inner"><div class="gallery-front" style="background-image: url(\'' + q.imageUrl + '\')"></div><div class="gallery-back"><div class="gallery-back-title">' + q.question.replace(/<[^>]+>/g, '').substring(3, 25) + '...</div><div class="gallery-back-desc">' + q.metaphor.replace(/<[^>]+>/g, '') + '</div></div></div>';
+                card.onclick = function() { this.classList.toggle('flipped'); };
+                wrongGallery.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
