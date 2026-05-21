@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医小晨 - 破伤风梭菌 沉浸心流版</title>
+    <style>
+        :root {
+            /* 破伤风梭菌的暗黑生锈马戏团紫调 */
+            --primary-color: #4a148c; /* 代表G+深紫色的主色 */
+            --primary-light: #f3e5f5;
+            --primary-dark: #1a0033;
+            --bg-color: #120b1a; /* 幽灵荒野的暗夜背景 */
+            --card-bg: #22152e; /* 深紫魔王卡片背景 */
+            --correct-color: #00e676;
+            --wrong-color: #ff1744;
+            --text-main: #e0d0f0;
+            --text-muted: #a088b0;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.2);
+            --shadow-lg: 0 15px 35px rgba(74, 20, 140, 0.4);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.3s;
+            overflow-x: hidden;
+        }
+
+        /* 👑 破伤风专属恶意机制：声光刺激强直抽搐特效 */
+        body.tetanus-spasm {
+            animation: lightFlash 0.1s infinite alternate, bodySpasm 0.1s infinite alternate;
+        }
+        @keyframes lightFlash {
+            0% { background-color: #120b1a; }
+            100% { background-color: #ff1744; }
+        }
+        @keyframes bodySpasm {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.02) translate(3px, -3px); }
+        }
+
+        /* 狂狂暴心流模式 */
+        body.fever-mode {
+            background-color: #0d001a;
+            animation: feverPulse 2s infinite alternate;
+        }
+        @keyframes feverPulse {
+            0% { box-shadow: inset 0 0 50px rgba(170, 0, 255, 0.4); }
+            100% { box-shadow: inset 0 0 150px rgba(170, 0, 255, 0.8); }
+        }
+
+        #vfx-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute; background: rgba(224, 64, 251, 0.8);
+            border-radius: 50%; animation: floatUp linear forwards;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        .app-container {
+            max-width: 600px; width: 100%; background-color: var(--card-bg);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+            overflow: hidden; position: relative; z-index: 10;
+            border: 1px solid #3d2054;
+        }
+
+        /* 剧烈物理抽搐反馈 */
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-3px, 0, 0); }
+            20%, 80% { transform: translate3d(5px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-10px, 0, 0); }
+            40%, 60% { transform: translate3d(10px, 0, 0); }
+        }
+
+        /* RPG 顶栏 */
+        .rpg-header {
+            background-color: #0d0614; padding: 15px 20px; display: none;
+            flex-direction: column; gap: 8px; border-bottom: 2px solid #3d2054;
+        }
+        .boss-info { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 14px; }
+        .hp-bar-bg { width: 100%; height: 14px; background-color: #2a163d; border-radius: 7px; overflow: hidden; border: 1px solid #4a148c; }
+        .hp-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #aa00ff, #e040fb); width: 100%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(170, 0, 255, 0.8);
+        }
+        .combo-text {
+            color: #ffd600; font-style: italic; font-size: 14px; font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s;
+        }
+        .combo-text.show { opacity: 1; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .content-padding { padding: 30px; }
+        .section-title { color: #e040fb; font-size: 22px; margin-bottom: 20px; text-align: center; font-weight: 800; text-shadow: 0 0 10px rgba(224,64,251,0.3); }
+        
+        /* 视频跳转引导卡片 */
+        .video-banner {
+            background: linear-gradient(135deg, #2a143d, #1a0826);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-main);
+            border: 1px solid #4a1d70;
+        }
+        .video-banner:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(170, 0, 255, 0.3);
+        }
+        .video-banner-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .video-title {
+            font-weight: 800;
+            color: #e040fb;
+            font-size: 15px;
+        }
+        .video-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .video-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(74, 20, 140, 0.4);
+            transition: background 0.2s;
+        }
+        .video-banner:hover .video-btn {
+            background: #6a1b9a;
+        }
+
+        .panorama-img { width: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: 20px; display: block; min-height: 180px; background-color: #1a0b26; object-fit: cover; border: 1px solid #3d2054; }
+
+        /* 介绍区块 */
+        .feature-block {
+            text-align: left; background: #1b0f24; padding: 15px; border-radius: 10px;
+            margin-bottom: 15px; border: 1px solid #321b45;
+        }
+        .feature-title { font-weight: bold; color: #e040fb; margin-bottom: 5px; font-size: 15px; }
+        .feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dashed #321b45; }
+        .timer-badge { background-color: #2a163d; color: #e040fb; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; border: 1px solid #4a148c; }
+        .timer-badge.danger { background-color: #420612; color: var(--wrong-color); border-color: var(--wrong-color); animation: pulse 1s infinite; }
+        
+        /* 题干与选项 */
+        .question-text { font-size: 18px; font-weight: 500; margin-bottom: 25px; line-height: 1.6; color: #e8dcf5; }
+        .q-hl { 
+            font-weight: 800; color: #fff; 
+            background: linear-gradient(120deg, rgba(224, 64, 251, 0.4) 0%, rgba(224, 64, 251, 0.4) 100%);
+            background-repeat: no-repeat; background-size: 100% 40%; background-position: 0 88%;
+            padding: 0 2px;
+        }
+
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background-color: #1b0f24; border: 2px solid #321b45; border-radius: var(--radius-md); padding: 16px 20px; font-size: 16px; color: var(--text-main); text-align: left; cursor: pointer; transition: all 0.2s ease; font-weight: 500;}
+        .option-btn:hover:not(:disabled) { border-color: #e040fb; background-color: #2a143d; transform: translateY(-2px); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.8; transform: none; }
+        .option-btn.correct { background-color: #002b11; border-color: var(--correct-color); color: #00e676; font-weight: bold; }
+        .option-btn.wrong { background-color: #420612; border-color: var(--wrong-color); color: #ff1744; }
+
+        /* 刮刮乐 */
+        .hint-btn {
+            background: none; border: 1px dashed #e040fb; color: #e040fb;
+            padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; 
+            width: 100%; margin-top: 15px; transition: 0.2s; display: none;
+        }
+        .hint-btn:hover { background: #2a143d; }
+        .hint-img-container { display: none; margin-top: 15px; position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #3d2054; }
+        .hint-img { width: 100%; filter: blur(15px); transition: filter 0.3s; }
+        .hint-img.revealed { filter: blur(0); }
+        .hint-overlay-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 20px; pointer-events: none; }
+
+        /* 解析区 */
+        .feedback-card { display: none; margin-top: 25px; background-color: #160a21; border: 2px solid #321b45; padding: 20px; border-radius: var(--radius-md); position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.3); animation: slideUpFade 0.5s forwards; }
+        .feedback-card::before { content: ''; position: absolute; left: -2px; top: -2px; bottom: -2px; width: 6px; background-color: var(--primary-color); border-radius: 10px 0 0 10px; }
+        .feedback-card.show { display: block; }
+        .feedback-img { width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; border: 1px solid #3d2054; }
+        
+        .highlight { color: #f50057; font-weight: bold; background: #2a143d; padding: 2px 6px; border-radius: 4px; margin: 0 2px; border: 1px solid #4a148c; }
+        .fact-text { font-size: 15px; color: #e0d0f0; margin-bottom: 12px; line-height: 1.7; background-color: #1f112e; padding: 12px 15px; border-radius: 8px; border-left: 3px solid #e040fb; }
+        .metaphor-text { font-size: 15px; color: #ccb8de; line-height: 1.7; padding: 0 5px; }
+        
+        .retry-warning { display: none; margin-top: 15px; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; text-align: center; }
+
+        /* 复盘画廊 */
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
+        .gallery-item { perspective: 1000px; cursor: pointer; height: 160px; }
+        .gallery-inner { width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; border-radius: 12px; box-shadow: var(--shadow-sm); }
+        .gallery-item:hover .gallery-inner { box-shadow: 0 8px 15px rgba(170,0,255,0.2); }
+        .gallery-item.flipped .gallery-inner { transform: rotateY(180deg); }
+        
+        .gallery-front, .gallery-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 12px; overflow: hidden; }
+        .gallery-front { background-size: cover; background-position: center; filter: grayscale(100%) brightness(0.5); transition: filter 0.3s; display: flex; align-items: center; justify-content: center; border: 1px solid #3d2054; }
+        .gallery-front::after { content: '点击复盘 🔄'; color: white; background: rgba(74, 20, 140, 0.9); padding: 8px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.5); border: 1px solid #e040fb; }
+        .gallery-item.flipped .gallery-front { filter: grayscale(0%) brightness(1); } 
+        
+        .gallery-back { background-color: #1a0b26; transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 2px solid var(--primary-color); }
+        .gallery-back-title { font-size: 13px; font-weight: bold; color: #e040fb; margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .gallery-back-desc { font-size: 12px; color: var(--text-main); line-height: 1.5; }
+
+        .primary-btn { width: 100%; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(74, 20, 140, 0.4); margin-top: 15px; border: 1px solid #7b1fa2; }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(170, 0, 255, 0.5); }
+        
+        .secondary-btn { background: #251633; color: #b09ebb; box-shadow: none; margin-top: 10px; font-size: 15px; padding: 14px; border: 1px solid #3d2554;}
+        .secondary-btn:hover { background: #321d45; color: #fff; }
+
+        .hidden { display: none !important; }
+
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="vfx-layer"></div>
+
+    <div class="app-container" id="main-container">
+        <div class="rpg-header" id="rpg-header">
+            <div class="boss-info">
+                <span>🎪 生锈马戏团：破伤风梭菌</span>
+                <span class="combo-text" id="combo-text">Combo x3! 🔥</span>
+                <span>剩余HP: <span id="hp-text">11</span></span>
+            </div>
+            <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-bar"></div></div>
+        </div>
+
+        <div id="intro-screen" class="content-padding">
+            <h1 class="section-title">🎪 幽灵荒野的生锈马戏团：破伤风梭菌</h1>
+
+            <a href="http://xhslink.com/o/35MRSx4lcXX" class="video-banner" target="_blank">
+                <div class="video-banner-content">
+                    <span class="video-title">▶️ 建议先花3分钟看下这期【破伤风记忆宫殿电影】</span>
+                    <span class="video-desc">内置暗黑剧情和强烈声光痉挛音效，看完秒变满分学霸 ⸜(๑'ᵕ'๑)⸝⋆*</span>
+                </div>
+                <span class="video-btn">去小红书观看 ↗</span>
+            </a>
+
+            <img class="panorama-img" id="intro-panorama" src="https://img.cdn1.vip/i/6a0db972efffd_1779284338.webp" alt="破伤风梭菌全景图">
+
+            <div class="feature-block">
+                <div class="feature-title">📚 核心考点深度融合</div>
+                <div class="feature-desc">结合学校期末核心笔试题库与临床执医高频考点，完美去重合并。重点攻克形态、致病大前提、毒素机制与临床急救决策！</div>
+            </div>
+            <div class="feature-block">
+                <div class="feature-title">⚠️ 破伤风高危恶意玩法</div>
+                <div class="feature-desc">15秒倒计时高压刺激！做错或超时将直接面临“声光刺激”，诱发屏幕强直性闪烁痉挛！在绝对震撼中将解毒剂(TAT)化作本能反应 ୧⍢⃝୨</div>
+            </div>
+
+            <button class="primary-btn" onclick="startQuiz()" style="margin-top: 10px;">踏入生锈马戏团 ⚔️</button>
+        </div>
+
+        <div id="quiz-screen" class="content-padding hidden">
+            <div class="header-info">
+                <span style="font-weight: bold; color: #e040fb;">🎯 高频核心扫荡</span>
+                <div class="timer-badge" id="timer-badge">⏳ <span id="time-left">15</span>s</div>
+            </div>
+
+            <div class="question-text" id="question-text">题目加载中...</div>
+            <div class="options-container" id="options-container"></div>
+            
+            <button class="hint-btn" id="hint-btn" onclick="useHint()">🔍 消耗 1 Combo 开启马戏团线索</button>
+            <div class="hint-img-container" id="hint-container">
+                <img class="hint-img" id="hint-img" src="">
+                <div class="hint-overlay-text" id="hint-overlay">已刮开 (3秒后变暗)</div>
+            </div>
+
+            <div class="feedback-card" id="feedback-card">
+                <img id="feedback-img" class="feedback-img" src="">
+                <div class="fact-text" id="fact-text"></div>
+                <div class="metaphor-text" id="metaphor-text"></div>
+                <div class="retry-warning" id="retry-warning"></div>
+                <button class="primary-btn" id="next-btn" onclick="nextQuestion()">继续追击 ➡️</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="content-padding hidden">
+            <h1 class="section-title">🎉 生锈马戏团全数通关</h1>
+            <p class="section-subtitle" id="gallery-subtitle" style="margin-bottom: 15px; text-align: center;">以下是你刚刚遭遇痉挛的遗忘碎片。点击翻转复盘。</p>
+            
+            <div class="gallery-grid" id="wrong-gallery"></div>
+
+            <button class="primary-btn" onclick="goToNext()">🗺️ 开启下一战役</button>
+            <button class="primary-btn secondary-btn" onclick="restartQuiz()">🔄 重置当前战役</button>
+
+            <p style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 20px;">
+                马戏团的大幕已经落下，记忆锚点已经深锁大脑，随时可以复习配套视频电影。
+            </p>
+        </div>
+    </div>
+
+    <script>
+        try {
+            const CustomMedia = {
+                introImage: "https://img.cdn1.vip/i/6a0db972efffd_1779284338.webp", 
+                bgm: "",        
+                correct: "",    
+                wrong: "",      
+                fever: "",      
+                win: ""         
+            };
+
+            // 👁️ 破伤风梭菌·完全体视觉题库（④已精准对齐最新11张高理解画册图片）
+            const originalQuizData = [
+                {
+                    id: 0,
+                    question: "1. 破伤风梭菌的<span class='q-hl'>形态特点</span>是：",
+                    options: ["A. 菌体呈竹节状排列，有荚膜", "B. 芽胞正圆形，位于菌体顶端，呈鼓槌状", "C. 无鞭毛，靠菌毛运动", "D. 芽胞椭圆形，位于菌体次极端", "E. 无芽胞的革兰阴性粗大杆菌"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：破伤风梭菌为革兰阳性杆菌，芽胞呈正圆形，位于菌体顶端，使菌体膨大呈典型的<span class='highlight'>鼓槌状</span>，有周鞭毛，无荚膜。",
+                    metaphor: "🔮 视觉锚定：锁定马戏团中央舞台区。杂技演员身穿代表G+的<span class='highlight'>深紫色紧身衣</span>，手里高高举着一个**顶端是正圆形大球的马戏团鼓槌**！这就是它的标志性形态卡。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0db993d9560_1779284371.webp" 
+                },
+                {
+                    id: 1,
+                    question: "2. 厌氧芽胞杆菌能<span class='q-hl'>耐受恶劣环境条件</span>的主要原因是由于具有：",
+                    options: ["A. 内毒素", "B. 荚膜", "C. 鞭毛", "D. 芽胞", "E. 菌毛"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：厌氧芽胞梭菌在自然界中主要以<span class='highlight'>芽胞形式</span>存在，具有极强的抵抗力，能耐受恶劣环境条件，主要分布于土壤中。",
+                    metaphor: "🌋 视觉锚定：马戏团的舞台外围是一片焦黑的乱石土壤。任凭风吹雨打、环境恶劣，破伤风梭菌都依靠身上那层**坚硬的芽胞盔甲**在土壤里死守，等待着伤口的出现。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0db992119ad_1779284370.webp"
+                },
+                {
+                    id: 2,
+                    question: "3. 破伤风梭菌侵入人体并大量繁殖的<span class='q-hl'>重要致病大前提</span>是：",
+                    options: ["A. 细菌芽胞污染了意外伤口", "B. 机体免疫力极度低下", "C. 形成窄而深及大量坏死组织压迫的严格厌氧微环境", "D. 细菌繁殖体直接在浅表擦伤处存活", "E. 菌群失调导致屏障破坏"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：破伤风梭菌是专性厌氧菌，浅表伤口阳光氧气充足无法生存；必须是<span class='highlight'>窄而深（如铁钉刺伤）</span>、缺血、有坏死组织堆积的严格<span class='highlight'>厌氧微环境</span>才能发病。",
+                    metaphor: "🕳️ 视觉锚定：移向左侧陷阱区。不是所有的钉子都致命！看那口**布满锈铁钉、深不见底的窄深地洞**！只有在这种闭塞无氧、缺血坏死、完美隔绝阳光的严格厌氧微环境下，地洞深处的恶魔才能苏醒！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0db99384e6b_1779284371.webp"
+                },
+                {
+                    id: 3,
+                    question: "4. 破伤风梭菌的<span class='q-hl'>主要致病物质</span>是：",
+                    options: ["A. 溶血毒素（内毒素）", "B. 细胞毒素", "C. 表皮剥脱毒素", "D. 强烈的神经外毒素（破伤风痉挛毒素）", "E. 侵袭性酶类"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：破伤风梭菌的主要致病物质是其产生的<span class='highlight'>外毒素</span>，即<span class='highlight'>破伤风痉挛毒素</span>，属于毒性极强的神经毒素，仅次于肉毒毒素。",
+                    metaphor: "⚡ 视觉锚定：中央舞台的致病引擎疯狂启动！杂技演员拉开机关，释放出冒着毁灭光芒的**破伤风痉挛毒素外毒素**。这是一种破坏力超强的嗜神经外毒素，是整场悲剧的始作俑者。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0db9941c7d7_1779284372.webp" 
+                },
+                {
+                    id: 4,
+                    question: "5. 破伤风痉挛毒素的<span class='q-hl'>致病机理</span>是：",
+                    options: ["A. 抑制细胞蛋白质合成，导致组织坏死", "B. 阻断外周胆碱能神经末梢释放乙酰胆碱，引起肌肉弛缓性麻痹", "C. 激活腺苷酸环化酶，引起肠粘膜分泌亢进", "D. 阻止中枢神经系统抑制性突触释放抑制性神经介质，导致肌肉强直性痉挛", "E. 侵入血液引起菌血症和脓毒血症"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：破伤风痉挛毒素通过重链与受体结合，轻链发挥毒性作用，选择性地<span class='highlight'>阻断中枢突触抑制性神经介质（甘氨酸/GABA）的释放</span>，使运动神经元失去“刹车”控制，导致肌肉持续强直痉挛。",
+                    metaphor: "✂️ 视觉锚定：快看舞台背景的巨型提线木偶！毒素像一把锋利的剪刀，**狠狠剪断了代表抑制信号的控制拉索（失去刹车）**！木偶全身的肌肉线瞬间死死绷紧，疯狂持续兴奋，彻底陷入无休止的强直性抽搐状态！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0db9956c4d0_1779284373.webp" 
+                },
+                {
+                    id: 5,
+                    question: "6. 全身肌肉群同时收缩，临床最典型的<span class='q-hl'>最终扭曲形体形态</span>是：",
+                    options: ["A. 弛缓性麻痹，四肢瘫软", "B. 嘴部歪斜，半身不遂", "C. 牙关紧闭、苦笑面容、角弓反张", "D. 全身皮肤剥脱呈烫伤样", "E. 恶心呕吐伴剧烈腹泻"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：当所有肌肉同时持续痉挛时，由于咀嚼肌和背部肌群拉力远大于对侧肌群，临床表现为先有张口困难，继之出现<span class='highlight'>牙关紧闭、苦笑面容、角弓反张</span>。",
+                    metaphor: "👺 视觉锚定：视线扫向右侧高危区！一个木偶面具正死死咬紧牙关，扯出一个**诡异狰狞的“苦笑面容”**！旁边一个特技演员整个人向后疯狂对折，形成一个极其夸张的**“角弓反张”拱桥形态**，这是因为他背部的力道太强了！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0db9ce09dc0_1779284430.webp" 
+                },
+                {
+                    id: 6,
+                    question: "7. 破伤风梭菌在血平板上培养后的<span class='q-hl'>菌落生长特点</span>是：",
+                    options: ["A. 菌落周围形成清晰的双层溶血环", "B. 形成粗糙的花菜样菌落", "C. 呈薄膜状爬行生长，伴有羽毛状或网状边缘", "D. 形成脐状凹陷菌落", "E. 表面生长出微小的透明露滴状菌落"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：破伤风梭菌有周鞭毛，运动力活泼。在普通培养基中生长不活跃，但在血平板培养后，会呈现出<span class='highlight'>薄膜状爬行生长</span>，并形成明显的<span class='highlight'>羽毛状边缘菌落</span>。",
+                    metaphor: "🪶 视觉锚定：翻开马戏团培养皿档案册。由于破伤风梭菌长满了“周鞭毛”触手，它在血平板上像幽灵一样四处蔓延爬行，长出一圈**像轻盈羽毛一样的淡紫色薄膜生长纹**，极具欺骗性。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0db9cd065f7_1779284429.webp" 
+                },
+                {
+                    id: 7,
+                    question: "8. 临床上若高度疑似破伤风感染伴随抽搐，其<span class='q-hl'>首要的急救微生物学决策</span>是：",
+                    options: ["A. 立即送检标本进行常规细菌分离培养，等待结果后再给药", "B. 必须等到厌氧培养出羽毛状菌落方可确诊治疗", "C. 严禁使用任何抗毒素，优先进行基因测序", "D. 依据临床症状立即注射大量抗毒素(TAT)中和游离毒素，决不能等待培养结果", "E. 仅进行伤口局部涂片镜检，不作任何全身处理"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：破伤风梭菌培养极其缓慢且阳性率低。由于毒素一旦与神经元结合便无法被中和，故医学铁律为：<span class='highlight'>不能等待微生物学检查结果</span>，必须根据临床体征<span class='highlight'>立即足量注射TAT</span>中和游离毒素。",
+                    metaphor: "🔬 视觉锚定：看右侧高危决策区那幅被锁链死死**封印的显微镜图**！医学铁律高呼：**“绝对不要等培养结果！”** 培养太慢了！趁着毒素还在血液里游离、还没和神经元结合，赶快早期、足量注射TAT抗毒素拦截毒素！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0db9cdbe383_1779284429.webp" 
+                },
+                {
+                    id: 8,
+                    question: "9. 应用破伤风抗毒素（TAT）治疗破伤风的<span class='q-hl'>确切机制</span>是：",
+                    options: ["A.彻底杀灭伤口中正在繁殖的破伤风梭菌", "B. 能够强行中和并剥离已经与神经细胞结合的外毒素", "C. 直接作为抗生素抑制破伤风杆菌的生长", "D. 仅能中和游离于血液、淋巴液等神经细胞外的外毒素", "E. 刺激人体B细胞产生特异性抗体"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：破伤风抗毒素（TAT）属于外源性抗体（被动免疫），它<span class='highlight'>只能中和游离的外毒素</span>。对于已经与神经细胞结合的毒素无能为力。",
+                    metaphor: "🛡️ 视觉锚定：回想高危决策区的抢救针筒（TAT）。TAT是一面特种盾牌，它**只能拦截天天空正在飞向神经元的游离毒素导弹**。如果毒素导弹已经炸进神经元大楼结合了，TAT也根本没办法把它们抠下来！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0db9cec152c_1779284430.webp" 
+                },
+                {
+                    id: 9,
+                    question: "10. 针对破伤风的<span class='q-hl'>主动免疫防御预防接种</span>，常采用：",
+                    options: ["A. 注射破伤风死菌苗", "B. 注射破伤风抗毒素（TAT）", "C. 婴儿出生后接种白百破（DPT）三联疫苗（类毒素）", "D. 给易感人群紧急注射人破伤风免疫球蛋白（TIG）", "E. 定期口服减毒活菌苗"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：我国广泛推行的新生儿主动免疫程序是接种<span class='highlight'>白百破（DPT）三联疫苗</span>，其组成是白喉类毒素、百日咳死疫苗（或成分疫苗）以及<span class='highlight'>破伤风类毒素</span>。",
+                    metaphor: "🛡️ 视觉锚定：视线拉回马戏团中央，那里高高悬挂着一件精密的防弹衣——**白百破（DPT）三联防弹衣**！白色的云（白喉类毒素）、百宝箱（百日咳）、破裂的铁钉（破伤风类毒素）。穿上它，机体就能获得长效的主动免疫抗体！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0db9d0a2c16_1779284432.webp" 
+                },
+                {
+                    id: 10,
+                    question: "11. 男，22岁。9天前脚被生锈铁钉深刺伤。1天前突发牙关紧闭，强直抽搐。若该疾病继续发展，<span class='q-hl'>最危及生命的突发体征</span>是：",
+                    options: ["A. 严重的骨折", "B. 长期无法进食导致的营养障碍", "C. 膈肌与持续呼吸肌痉挛引起的窒息死亡", "D. 频繁抽搐导致的肌肉断裂", "E. 膀胱括约肌痉挛引起的尿潴留"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：破伤风患者神志始终清楚，不发热。随着肌肉痉挛加重，全身抽搐越发频繁。若疾病继续恶化，最严重的致命危险是<span class='highlight'>持续呼吸肌与膈肌痉挛</span>引发的<span class='highlight'>窒息</span>。",
+                    metaphor: "☠️ 视觉锚定：整个生锈马戏团最令人战栗的一幕发生了！木偶特技演员被彻底拉死，**呼吸肌和膈肌死死卡住完全无法动弹**，他神志无比清醒却无法吸入一口氧气！窒息死亡，这是生锈马戏团里最致命的终极死因！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0db9d06010b_1779284432.webp" 
+                }
+            ];
+
+            let workingQueue = []; 
+            let currentIndex = 0;
+            const totalHitsToWin = originalQuizData.length;
+            let hitsRemaining = totalHitsToWin;
+            
+            let combo = 0;
+            let timerInterval;
+            let timeLeft = 15;
+            let wrongHistory = new Set(); 
+
+            let audioCtx = null;
+            let bgmInterval = null;
+            let isBgmPlaying = false;
+
+            function initAudio() { 
+                if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+                if(audioCtx.state === 'suspended') { audioCtx.resume(); } 
+            }
+
+            function startBGM() {
+                if(isBgmPlaying || !audioCtx) return;
+                isBgmPlaying = true;
+                let tick = 0;
+                bgmInterval = setInterval(() => {
+                    if(audioCtx.state === 'suspended') return;
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'triangle'; 
+                    if(tick % 4 === 0) { 
+                        osc.frequency.setValueAtTime(90, audioCtx.currentTime); gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    } else { 
+                        osc.frequency.setValueAtTime(120, audioCtx.currentTime); gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+                    }
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.15);
+                    tick++;
+                }, 500); 
+            }
+
+            function stopBGM() { isBgmPlaying = false; clearInterval(bgmInterval); }
+
+            function triggerTetanusSpasmVFX() {
+                document.body.classList.add('tetanus-spasm');
+                if(audioCtx && audioCtx.state !== 'suspended') {
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.5);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.6);
+                }
+                setTimeout(() => { document.body.classList.remove('tetanus-spasm'); }, 600);
+            }
+
+            function playTone(type) {
+                if(!audioCtx) return;
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                if(type === 'correct') { 
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(587, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1174, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25); osc.start(); osc.stop(audioCtx.currentTime + 0.25); 
+                } else if (type === 'wrong') { 
+                    triggerTetanusSpasmVFX(); 
+                } else if (type === 'fever') { 
+                    osc.type = 'square'; osc.frequency.setValueAtTime(987, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1975, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                } else if (type === 'win') { 
+                    const freqs = [523, 659, 784, 1046]; 
+                    freqs.forEach((f, i) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.setValueAtTime(0, audioCtx.currentTime + i*0.08); g.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + i*0.08 + 0.04); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i*0.08 + 0.8); o.start(audioCtx.currentTime + i*0.08); o.stop(audioCtx.currentTime + i*0.08 + 0.8); }); 
+                }
+            }
+
+            let particleInterval = null;
+            const vfxLayer = document.getElementById('vfx-layer');
+
+            function startFeverVFX() {
+                if(particleInterval) return;
+                particleInterval = setInterval(() => {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.width = p.style.height = (Math.random() * 5 + 2) + 'px';
+                    p.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                    vfxLayer.appendChild(p);
+                    setTimeout(() => p.remove(), 2500);
+                }, 120);
+            }
+
+            function stopFeverVFX() { clearInterval(particleInterval); particleInterval = null; vfxLayer.innerHTML = ''; }
+
+            function triggerWinVFX() {
+                for(let i=0; i<40; i++) {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = 50 + (Math.random() * 20 - 10) + '%'; p.style.top = 50 + (Math.random() * 20 - 10) + '%';
+                    p.style.width = p.style.height = (Math.random() * 5 + 3) + 'px';
+                    p.style.backgroundColor = `hsl(${Math.random() * 40 + 280}, 100%, 65%)`; 
+                    p.style.transform = `translate(${Math.random()*200-100}px, ${Math.random()*200-100}px)`;
+                    p.style.animation = 'floatUp 2s cubic-bezier(0.25, 1, 0.5, 1) forwards';
+                    vfxLayer.appendChild(p);
+                }
+                setTimeout(() => { vfxLayer.innerHTML = ''; }, 2000);
+            }
+
+            const introScreen = document.getElementById('intro-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const endScreen = document.getElementById('end-screen');
+            const mainContainer = document.getElementById('main-container');
+            const rpgHeader = document.getElementById('rpg-header');
+            const hpBar = document.getElementById('hp-bar');
+            const hpText = document.getElementById('hp-text');
+            const comboText = document.getElementById('combo-text');
+            const timeLeftSpan = document.getElementById('time-left');
+            const optionsContainer = document.getElementById('options-container');
+            const hintBtn = document.getElementById('hint-btn');
+            const hintContainer = document.getElementById('hint-container');
+            const hintImg = document.getElementById('hint-img');
+            const feedbackCard = document.getElementById('feedback-card');
+            const retryWarning = document.getElementById('retry-warning');
+            const wrongGallery = document.getElementById('wrong-gallery');
+
+            window.startQuiz = function() {
+                initAudio(); startBGM(); 
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+                
+                updateUI();
+                introScreen.classList.add('hidden'); endScreen.classList.add('hidden'); quizScreen.classList.remove('hidden');
+                rpgHeader.style.display = 'flex';
+                loadQuestion();
+            };
+
+            window.restartQuiz = function() {
+                clearInterval(timerInterval); stopBGM(); stopFeverVFX();
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+
+                hpBar.style.width = '100%'; hpText.innerText = hitsRemaining;
+                comboText.classList.remove('show'); document.body.classList.remove('fever-mode');
+                feedbackCard.classList.remove('show'); hintContainer.style.display = 'none'; hintBtn.style.display = 'none';
+                
+                endScreen.classList.add('hidden'); quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                introScreen.classList.remove('hidden');
+            };
+
+            // ②结尾处下一个菌的跳转链接，目前先空着
+            window.goToNext = function() {
+                window.location.href = "#";
+            };
+
+            function updateUI() {
+                hpText.innerText = hitsRemaining;
+                hpBar.style.width = `${(hitsRemaining / totalHitsToWin) * 100}%`;
+                if(combo > 0) {
+                    comboText.innerText = `Combo x${combo}! 🔥`; comboText.classList.add('show');
+                    if(combo >= 3) { document.body.classList.add('fever-mode'); startFeverVFX(); }
+                } else {
+                    comboText.classList.remove('show'); document.body.classList.remove('fever-mode'); stopFeverVFX();
+                }
+            }
+
+            function startTimer() {
+                clearInterval(timerInterval); timeLeft = 15; timeLeftSpan.innerText = timeLeft;
+                document.getElementById('timer-badge').classList.remove('danger');
+                timerInterval = setInterval(() => {
+                    timeLeft--; timeLeftSpan.innerText = timeLeft;
+                    if(timeLeft <= 5) document.getElementById('timer-badge').classList.add('danger');
+                    if(timeLeft <= 0) { clearInterval(timerInterval); handleTimeout(); }
+                }, 1000);
+            }
+
+            function loadQuestion() {
+                feedbackCard.classList.remove('show'); retryWarning.style.display = 'none'; hintContainer.style.display = 'none';
+                const currentQ = workingQueue[currentIndex];
+                document.getElementById('question-text').innerHTML = currentQ.question;
+                
+                if (combo >= 1 && currentQ.imageUrl) {
+                    hintBtn.style.display = 'block'; hintBtn.innerText = `🔍 消耗 1 Combo 开启马戏团线索 (当前 x${combo})`;
+                } else {
+                    hintBtn.style.display = 'none';
+                }
+
+                optionsContainer.innerHTML = '';
+                currentQ.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button'); btn.innerText = opt; btn.classList.add('option-btn');
+                    btn.onclick = () => window.resolveAnswer(idx, btn);
+                    optionsContainer.appendChild(btn);
+                });
+                startTimer();
+            }
+
+            window.useHint = function() {
+                if (combo < 1) return;
+                combo--; updateUI();
+                hintBtn.style.display = 'none'; hintContainer.style.display = 'block';
+                hintImg.src = workingQueue[currentIndex].imageUrl; hintImg.classList.add('revealed');
+                setTimeout(() => { hintImg.classList.remove('revealed'); }, 3000);
+            };
+
+            function handleTimeout() {
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(btn => btn.disabled = true);
+                optionsButtons[currentQ.correctAnswer].classList.add('correct');
+                processResult(false, currentQ);
+            }
+
+            window.resolveAnswer = function(idx, btn) {
+                clearInterval(timerInterval);
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(b => b.disabled = true); hintBtn.style.display = 'none';
+
+                const isCorrect = (idx === currentQ.correctAnswer);
+                if (isCorrect) btn.classList.add('correct');
+                else { btn.classList.add('wrong'); optionsButtons[currentQ.correctAnswer].classList.add('correct'); }
+                processResult(isCorrect, currentQ);
+            };
+
+            function processResult(isCorrect, q) {
+                let msg = "";
+                if (isCorrect) {
+                    hitsRemaining--; combo++; playTone(combo >= 3 ? 'fever' : 'correct');
+                    msg = "✅ 毒素遭到拦截！成功削弱生锈马戏团核心！";
+                    retryWarning.style.color = "#00e676"; retryWarning.style.background = "#002b11";
+                } else {
+                    combo = 0; wrongHistory.add(q.id); 
+                    mainContainer.classList.add('shake'); setTimeout(()=>mainContainer.classList.remove('shake'), 400);
+                    workingQueue.push(q); playTone('wrong'); 
+                    msg = "❌ 声光刺激诱发强直抽搐！恶魔已重生至队列末尾！";
+                    retryWarning.style.color = "#ff1744"; retryWarning.style.background = "#420612";
+                }
+
+                updateUI();
+                document.getElementById('fact-text').innerHTML = q.fact;
+                document.getElementById('metaphor-text').innerHTML = q.metaphor;
+                const fbImg = document.getElementById('feedback-img');
+                if (q.imageUrl) { fbImg.src = q.imageUrl; fbImg.style.display = 'block'; } else { fbImg.style.display = 'none'; }
+                
+                retryWarning.innerText = msg; retryWarning.style.display = 'block';
+                feedbackCard.classList.add('show');
+            }
+
+            window.nextQuestion = function() {
+                currentIndex++;
+                if (hitsRemaining > 0 && currentIndex < workingQueue.length) { loadQuestion(); } 
+                else {
+                    playTone('win'); stopBGM(); stopFeverVFX(); triggerWinVFX(); document.body.classList.remove('fever-mode');
+                    setTimeout(() => {
+                        quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                        generateGallery(); endScreen.classList.remove('hidden');
+                    }, 400);
+                }
+            };
+
+            function generateGallery() {
+                wrongGallery.innerHTML = ''; const subtitle = document.getElementById('gallery-subtitle');
+                if (wrongHistory.size === 0) {
+                    subtitle.innerHTML = "<span style='color: var(--correct-color); font-weight: bold;'>🌟 完美克制强直毒素！你的大脑对马戏团完全免疫，无任何灰暗碎片！</span>";
+                    return;
+                }
+                subtitle.innerHTML = `以下是你刚刚因强直突触遗忘的 <b style="color:#e040fb">${wrongHistory.size}</b> 块灰暗碎片。点击重新激活记忆锚点。`;
+                
+                wrongHistory.forEach(id => {
+                    const q = originalQuizData.find(item => item.id === id);
+                    if (!q || !q.imageUrl) return;
+                    const card = document.createElement('div'); card.className = 'gallery-item';
+                    card.innerHTML = `
+                        <div class="gallery-inner">
+                            <div class="gallery-front" style="background-image: url('${q.imageUrl}')"></div>
+                            <div class="gallery-back">
+                                <div class="gallery-back-title">${q.question.replace(/<[^>]+>/g, '').substring(3, 25)}...</div>
+                                <div class="gallery-back-desc">${q.metaphor.replace(/<[^>]+>/g, '')}</div>
+                            </div>
+                        </div>
+                    `;
+                    card.onclick = function() { this.classList.toggle('flipped'); };
+                    wrongGallery.appendChild(card);
+                });
+            }
+        } catch (error) { alert("代码引擎异常: " + error.message); }
+    </script>
+</body>
+</html>
