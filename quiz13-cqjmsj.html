@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医小晨 - 产气荚膜梭菌 视觉记忆宫殿</title>
+    <style>
+        :root {
+            /* 产气荚膜梭菌：深紫色高压充气工厂风格 */
+            --primary-color: #4a148c; /* G+深紫烟雾主色 */
+            --primary-light: #f3e5f5;
+            --primary-dark: #30004a;
+            --bg-color: #f1f0f5; /* 工厂水泥灰白底色 */
+            --card-bg: #ffffff;
+            --correct-color: #2e7d32;
+            --wrong-color: #c62828;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-lg: 0 15px 35px rgba(74, 20, 140, 0.15);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s;
+            overflow-x: hidden;
+        }
+
+        /* 狂暴增殖模式（气性坏疽爆发） */
+        body.fever-mode {
+            background-color: #12001a;
+            animation: gangrenePulse 2s infinite alternate;
+        }
+        @keyframes gangrenePulse {
+            0% { box-shadow: inset 0 0 50px rgba(106, 27, 154, 0.3); }
+            100% { box-shadow: inset 0 0 150px rgba(74, 20, 140, 0.7); }
+        }
+
+        #vfx-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute; background: rgba(186, 104, 200, 0.6);
+            border-radius: 50%; animation: floatUp linear forwards;
+            box-shadow: 0 0 8px rgba(230, 81, 0, 0.3);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 0.8; }
+            100% { transform: translateY(-10vh) scale(2); opacity: 0; }
+        }
+
+        .app-container {
+            max-width: 600px; width: 100%; background-color: var(--card-bg);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+            overflow: hidden; position: relative; z-index: 10;
+        }
+
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* Boss 血条与 Combo UI */
+        .rpg-header {
+            background-color: #1a0f26; padding: 15px 20px; display: none;
+            flex-direction: column; gap: 8px; border-bottom: 3px solid #000;
+        }
+        .boss-info { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 14px; }
+        .hp-bar-bg { width: 100%; height: 14px; background-color: #38244c; border-radius: 7px; overflow: hidden; border: 1px solid #000; }
+        .hp-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #ab47bc, #7b1fa2); width: 100%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(171, 71, 188, 0.8);
+        }
+        .combo-text {
+            color: #e040fb; font-style: italic; font-size: 14px; font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s;
+        }
+        .combo-text.show { opacity: 1; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .content-padding { padding: 30px; }
+        .section-title { color: var(--primary-dark); font-size: 22px; margin-bottom: 20px; text-align: center; font-weight: 800; }
+        
+        .video-banner {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px; border-radius: 12px; margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 15px; cursor: pointer; transition: all 0.3s ease; text-decoration: none; color: var(--text-main);
+        }
+        .video-banner:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(74, 20, 140, 0.25); }
+        .video-banner-content { display: flex; flex-direction: column; gap: 5px; }
+        .video-title { font-weight: 800; color: var(--primary-dark); font-size: 15px; }
+        .video-desc { font-size: 13px; color: #555; }
+        .video-btn {
+            background: var(--primary-color); color: white; padding: 6px 12px;
+            border-radius: 20px; font-size: 12px; font-weight: bold; white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(74, 20, 140, 0.3); transition: background 0.2s;
+        }
+
+        .panorama-img { width: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: 20px; display: block; min-height: 180px; background-color: var(--primary-light); object-fit: cover; }
+
+        .feature-block { text-align: left; background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee; }
+        .feature-title { font-weight: bold; color: var(--primary-dark); margin-bottom: 5px; font-size: 15px; }
+        .feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dashed #eee; }
+        .timer-badge { background-color: #e0f7fa; color: #006064; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; border: 1px solid #b2ebf2; }
+        
+        /* 趣味机制：低氧高压警告 */
+        .timer-badge.danger { background-color: #ffe0b2; color: #e65100; animation: pulse 0.8s infinite; border-color: #ffb74d; }
+        
+        .question-text { font-size: 18px; font-weight: 500; margin-bottom: 25px; line-height: 1.6; color: #34495e; }
+        .q-hl { 
+            font-weight: 800; color: #000; 
+            background: linear-gradient(120deg, rgba(171, 71, 188, 0.3) 0%, rgba(171, 71, 188, 0.3) 100%);
+            background-repeat: no-repeat; background-size: 100% 40%; background-position: 0 88%; padding: 0 2px;
+        }
+
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background-color: #fff; border: 2px solid #eaeded; border-radius: var(--radius-md); padding: 16px 20px; font-size: 16px; color: var(--text-main); text-align: left; cursor: pointer; transition: all 0.2s ease; font-weight: 500;}
+        .option-btn:hover:not(:disabled) { border-color: var(--primary-color); background-color: var(--primary-light); transform: translateY(-2px); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; transform: none; }
+        .option-btn.correct { background-color: #e8f5e9; border-color: var(--correct-color); color: #1b5e20; font-weight: bold; }
+        .option-btn.wrong { background-color: #ffebee; border-color: var(--wrong-color); color: #b71c1c; }
+
+        .hint-btn {
+            background: none; border: 1px dashed var(--primary-color); color: var(--primary-color);
+            padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; 
+            width: 100%; margin-top: 15px; transition: 0.2s; display: none;
+        }
+        .hint-btn:hover { background: var(--primary-light); }
+        .hint-img-container { display: none; margin-top: 15px; position: relative; border-radius: 8px; overflow: hidden; }
+        .hint-img { width: 100%; filter: blur(15px); transition: filter 0.3s; }
+        .hint-img.revealed { filter: blur(0); }
+        .hint-overlay-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 20px; pointer-events: none; }
+
+        .feedback-card { display: none; margin-top: 25px; background-color: var(--card-bg); border: 2px solid var(--primary-light); padding: 20px; border-radius: var(--radius-md); position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.03); animation: slideUpFade 0.5s forwards; }
+        .feedback-card::before { content: ''; position: absolute; left: -2px; top: -2px; bottom: -2px; width: 6px; background-color: var(--primary-color); border-radius: 10px 0 0 10px; }
+        .feedback-card.show { display: block; }
+        .feedback-img { width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; }
+        
+        .highlight { color: var(--primary-color); font-weight: bold; background: var(--primary-light); padding: 2px 6px; border-radius: 4px; margin: 0 2px; }
+        .fact-text { font-size: 15px; color: #455a64; margin-bottom: 12px; line-height: 1.7; background-color: #f5f7fa; padding: 12px 15px; border-radius: 8px; }
+        .metaphor-text { font-size: 15px; color: #333; line-height: 1.7; padding: 0 5px; }
+        
+        .retry-warning { display: none; margin-top: 15px; padding: 10px; border-radius: 8px; background-color: #fff3e0; color: #e65100; font-size: 14px; font-weight: bold; text-align: center; }
+
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
+        .gallery-item { perspective: 1000px; cursor: pointer; height: 160px; }
+        .gallery-inner { width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; border-radius: 12px; box-shadow: var(--shadow-sm); }
+        .gallery-front, .gallery-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 12px; overflow: hidden; }
+        .gallery-front { background-size: cover; background-position: center; filter: grayscale(100%) brightness(0.7); transition: filter 0.3s; display: flex; align-items: center; justify-content: center; }
+        .gallery-front::after { content: '重构记忆 🔄'; color: white; background: rgba(74, 20, 140, 0.85); padding: 8px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .gallery-item.flipped .gallery-front { filter: grayscale(0%) brightness(1); } 
+        
+        .gallery-back { background-color: var(--primary-light); transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 2px solid var(--primary-color); }
+        .gallery-back-title { font-size: 13px; font-weight: bold; color: var(--primary-dark); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .gallery-back-desc { font-size: 12px; color: var(--text-main); line-height: 1.5; }
+
+        .primary-btn { width: 100%; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(74, 20, 140, 0.3); margin-top: 15px; }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(74, 20, 140, 0.4); }
+        .secondary-btn { background: #f1f3f5; color: #555; box-shadow: none; margin-top: 10px; font-size: 15px; padding: 14px;}
+        .secondary-btn:hover { background: #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transform: translateY(-1px); }
+
+        .hidden { display: none !important; }
+
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="vfx-layer"></div>
+
+    <div class="app-container" id="main-container">
+        <div class="rpg-header" id="rpg-header">
+            <div class="boss-info">
+                <span>🏭 充气工厂：产气荚膜梭菌</span>
+                <span class="combo-text" id="combo-text">Combo x3! 🔥</span>
+                <span>目标摧毁度: <span id="hp-text">13</span></span>
+            </div>
+            <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-bar"></div></div>
+        </div>
+
+        <div id="intro-screen" class="content-padding">
+            <h1 class="section-title">🏭 深入创口深部：产气荚膜梭菌战役</h1>
+
+            <a href="http://xhslink.com/o/34Yr4uFH9LC" class="video-banner" id="xhs-link" target="_blank">
+                <div class="video-banner-content">
+                    <span class="video-title">▶️ 建议先花3分钟看下这期【高压充气工厂记忆宫殿电影】</span>
+                    <span class="video-desc">双层溶血环、汹涌发酵和皮下捻发音加了3D音效，看完秒变送分题！⸜(๑'ᵕ'๑)⸝⋆*</span>
+                </div>
+                <span class="video-btn">去小红书观看 ↗</span>
+            </a>
+
+            <img class="panorama-img" id="intro-panorama" src="https://img.cdn1.vip/i/6a0dc73058ae7_1779287856.webp" alt="充气工厂全景图">
+
+            <div class="feature-block">
+                <div class="feature-title">🧱 核心考点扫荡（13道执医/期末重合题）</div>
+                <div class="feature-desc">精选重合度最高的极速产气、α毒素、双层溶血特征。专门揪出各种极易混淆的“不运动”、“有荚膜”特殊坑点！</div>
+            </div>
+            <div class="feature-block">
+                <div class="feature-title">🚨 趣味氧反制：低氧状态魔王将“反噬回血”</div>
+                <div class="feature-desc">专性厌氧菌最怕氧气！答题时间代表【高压氧舱】的维持气压。如果低于5秒或答错，厌氧工厂将疯狂繁殖反噬，让大魔王恢复生命！</div>
+            </div>
+
+            <button class="primary-btn" onclick="startQuiz()" style="margin-top: 10px;">切断缺氧环境 ⚔️</button>
+        </div>
+
+        <div id="quiz-screen" class="content-padding hidden">
+            <div class="header-info">
+                <span style="font-weight: bold; color: var(--primary-color);">🎯 创口深部火力压制</span>
+                <div class="timer-badge" id="timer-badge">舱内氧压: <span id="time-left">15</span>s</div>
+            </div>
+
+            <div class="question-text" id="question-text">探测器部署中...</div>
+            <div class="options-container" id="options-container"></div>
+            
+            <button class="hint-btn" id="hint-btn" onclick="useHint()">🔍 消耗 1 Combo 刮开视觉线索</button>
+            <div class="hint-img-container" id="hint-container">
+                <img class="hint-img" id="hint-img" src="">
+                <div class="hint-overlay-text" id="hint-overlay">已刮开 (3秒后变暗)</div>
+            </div>
+
+            <div class="feedback-card" id="feedback-card">
+                <img id="feedback-img" class="feedback-img" src="">
+                <div class="fact-text" id="fact-text"></div>
+                <div class="metaphor-text" id="metaphor-text"></div>
+                <div class="retry-warning" id="retry-warning"></div>
+                <button class="primary-btn" id="next-btn" onclick="nextQuestion()">物理清除坏死 ➡️</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="content-padding hidden">
+            <h1 class="section-title">🎉 厌氧工厂彻底被瓦解！</h1>
+            <p class="section-subtitle" id="gallery-subtitle" style="margin-bottom: 15px;">以下是被高压氧消灭的灰暗碎片。点击图片，重新重铸视觉锚点。</p>
+            
+            <div class="gallery-grid" id="wrong-gallery"></div>
+
+            <button class="primary-btn" onclick="goToNext()">🗺️ 开启下一战役</button>
+            <button class="primary-btn secondary-btn" onclick="restartQuiz()">🔄 重置当前关卡</button>
+        </div>
+    </div>
+
+    <script>
+        try {
+            const CustomMedia = {
+                introImage: "https://img.cdn1.vip/i/6a0dc73058ae7_1779287856.webp", 
+                bgm: "", correct: "", wrong: "", fever: "", win: ""         
+            };
+
+            // 👁️ 产气荚膜梭菌·完全体视觉数据库（选项已彻底解除字符编译死锁）
+            const originalQuizData = [
+                {
+                    id: 0,
+                    question: "1. 产气荚膜梭菌在牛奶培养基中培养时，可引起的典型特征是：",
+                    options: ["A. 汹涌发酵", "B. 产生大块绿脓", "C. 形成表面微小菌落", "D. 凝块溶解呈表面生长", "E. 产生恶臭的黑色素沉淀"],
+                    correctAnswer: 0, 
+                    fact: "🎯 核心事实：产气荚膜梭菌代谢极度活跃，分解乳糖剧烈产酸产气，使酪蛋白凝固并被气体冲刷撕裂，形成<span class='highlight'>“汹涌发酵(Stormy Fermentation)”</span>现象。",
+                    metaphor: "🥛 视觉锚定：锁定【左侧生化质检区】。那尊白色牛奶罐由于内部极速产酸产气，直接发生了<span class='highlight'>“牛奶大爆炸”</span>，酪蛋白像海绵碎块一样四处喷溅！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc5cd69f79_1779287501.webp" 
+                },
+                {
+                    id: 1,
+                    question: "2. 在血琼脂平板上能够形成<span class='q-hl'>双层溶血环</span>的细菌是：",
+                    options: ["A. 破伤风梭菌", "B. RD梭菌", "C. 产气荚膜梭菌", "D. 金黄色葡萄球菌", "E. 炭疽杆菌"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：产气荚膜梭菌在血平板上可产生由$\theta$毒素（完全β溶血内环）和$\alpha$毒素（不完全$\alpha$溶血外环）共同构成的<span class='highlight'>双层溶血环</span>。",
+                    metaphor: "🍳 视觉锚定：看【左侧生化区】桌上的培养皿。它长得就像一个双层的**“煎鸡蛋”**，内环完全透明，外环模糊暗红，这是鉴定该菌的黄金指标！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc5cc4d9fc_1779287500.webp"
+                },
+                {
+                    id: 2,
+                    question: "3. 产气荚膜梭菌产生的各种毒素和酶中，<span class='q-hl'>毒性最强、最重要</span>的是：",
+                    options: ["A. 胶原酶", "B. 透明质酸酶", "C. 卵磷脂酶($\alpha$毒素)", "D. DNA酶", "E. RNA酶"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：产气荚膜梭菌产生的最重要、毒性最强的外毒素是<span class='highlight'>$\alpha$毒素（本质为卵磷脂酶）</span>，能溶解红细胞 and 血管内皮，导致组织坏死。",
+                    metaphor: "✂️ 视觉锚定：【生化区】的生动拆解。$\alpha$毒素就像一把**疯狂的剪刀**，专切细胞膜上的“卵磷脂”，把血管和肌肉毁个精光！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc5cd26fd6_1779287501.webp"
+                },
+                {
+                    id: 3,
+                    question: "4. 男，32岁。左下肢外伤施肥1天后剧痛、发紫。查体：皮下有<span class='q-hl'>捻发音</span>，伤口流出恶臭血性浆液。其致病菌形态组合正确的是：",
+                    options: ["A. 革兰阳性，无荚膜，有周鞭毛", "B. 革兰阳性，有明显荚膜，无鞭毛", "C. 革兰阴性，有荚膜，有鞭毛", "D. 革兰阳性，芽胞圆形位于顶端", "E. 革兰阴性，无荚膜，无鞭毛"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：产气荚膜梭菌是化脓性气性坏疽的病原菌，形态上属于<span class='highlight'>革兰阳性粗大杆菌</span>，且在致病梭菌中极其特殊地具备<span class='highlight'>“有明显荚膜、无鞭毛（固定不动）”</span>的特征。",
+                    metaphor: "🛡️ 视觉锚定：移向【中央核心动力区】。这个粗大紫色管道（G+杆菌）外面包着一层<span class='highlight'>透明塑料保护膜（有荚膜）</span>，而且底座死死焊接在地上，没有任何轮子履带（无鞭毛固定不动）！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc5cd916d0_1779287501.webp" 
+                },
+                {
+                    id: 4,
+                    question: "5. 气性坏疽的典型症状之一是组织气肿，其主要原因是：",
+                    options: ["A. 细菌分解组织中多种糖类产气", "B. 细菌形成汹涌发酵现象", "C. 细菌产生大量内毒素引起休克", "D. 细菌产生大量的透明质酸酶", "E. 组织发生自身氧化分解"],
+                    correctAnswer: 0, 
+                    fact: "🎯 核心事实：气性坏疽之所以在皮下产生气体和局部气肿，是因为该菌能<span class='highlight'>分解肌肉和组织中的多种糖类</span>，疯狂产生大量气体。",
+                    metaphor: "🎈 视觉锚定：看看【右侧灾难现场】。那个工人的左手臂因为肌肉里的糖分被细菌当做燃料榨干分解，产生大量气体，整条手臂像**充了气的紫色大布袋**一样极度肿胀！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc5ce6ec4a_1779287502.webp" 
+                },
+                {
+                    id: 5,
+                    question: "6. 医生按压气性坏疽患者的皮下肿胀部位时，触诊常能感觉到的特殊特征是：",
+                    options: ["A. 波动感", "B. 捻发感", "C. 坚硬如石", "D. 冰冷无痛", "E. 明显的压陷性水肿"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：气性坏疽局部病变由于大量产气储留于皮下，按压时会产生气体穿过组织间隙的特殊<span class='highlight'>“捻发感(Crepitus)”</span>。",
+                    metaphor: "💥 视觉锚定：【右侧现场面板2】。救援人员用手去按压充气手臂时，会发出类似**“捏碎塑料气泡垫”**或在雪地上踩拭的“咔嚓”声！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc7fe32077_1779288062.webp" 
+                },
+                {
+                    id: 6,
+                    question: "7. 产气荚膜梭菌除了引起严重的战伤和严重创伤感染外，还能通过污染食物引起：",
+                    options: ["A. 伪膜性肠炎", "B. 烫伤样皮肤综合征", "C. 食物中毒与坏死性肠炎", "D. 弛缓性神经麻痹", "E. 强直性肌肉痉挛"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：产气荚膜梭菌除引起气性坏疽外，A型菌产生的肠毒素还可以引起临床上以腹痛、腹泻为主的<span class='highlight'>食物中毒</span>，某些菌株亦可致坏死性肠炎。",
+                    metaphor: "🥩 视觉锚定：回想【左侧质检区】旁边。不仅有爆炸的牛奶，由于这家充气工厂环境恶劣，它的流水线还会生产出**带有毒素的污染熟肉**，食入直接放倒整片食客。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc60e48d92_1779287566.webp" 
+                },
+                {
+                    id: 7,
+                    question: "8. 产气荚膜梭菌和破伤风梭菌等厌氧芽胞梭菌能在自然界中长期存活、耐受恶劣环境，主要因为它们：",
+                    options: ["A. 能够形成荚膜", "B. 能够形成周鞭毛", "C. 以芽胞形式存在", "D. 产生大格外毒素", "E. 细胞壁极厚"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：厌氧芽胞梭菌在土壤等外界环境中均以抵抗力极强的<span class='highlight'>芽胞</span>形式存在，从而能在土壤中存活多年。",
+                    metaphor: "🌱 视觉锚定：在工厂地基之下的土壤里。到处都散落着细菌脱下繁殖体外衣后形成的<span class='highlight'>“地雷般坚硬的芽胞”</span>。只要不遇到高压氧，它们能潜伏数十年。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc6133a1c2_1779287571.webp" 
+                },
+                {
+                    id: 8,
+                    question: "9. 产气荚膜梭菌的芽胞形态及位置特点是：",
+                    options: ["A. 正圆形，位于菌体顶端，菌体呈鼓槌状", "B. 椭圆形，位于菌体次极端，菌体不膨大", "C. 椭圆形，位于菌体正中央，菌体呈梭形", "D. 正圆形，位于菌体次极端，菌体呈竹节状", "E. 大于菌体，位于菌体顶端，呈汤勺状"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：产气荚膜梭菌的芽胞呈<span class='highlight'>椭圆形，位于菌体次极端</span>，且芽胞直径略小于菌体，故菌体一般不膨大。",
+                    metaphor: "🧪 视觉锚定：仔细看【中央动力区】管道内壁隐藏的胶囊。那些**椭圆形的小胶囊都躲在次极端的拐角处**，绝不在顶端出风头，所以整根紫管形状非常匀称，没有两头粗中间细。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc6133a1c2_1779287571.webp" 
+                },
+                {
+                    id: 9,
+                    question: "10. 对于产气荚膜梭菌感染（气性坏疽）极有价值的【临床快速诊断方法】是：",
+                    options: ["A. 取坏死组织进行长达数日的专性厌氧培养", "B. 留取标本做动物致死试验", "C. 从深部创口取材直接涂片革兰染色镜检", "D. 进行长时间的“汹涌发酵”试验", "E. 抽取外周血检测白细胞数量"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：气性坏疽病情凶险发展极快，早期诊断必须争分夺秒，直接从伤口深部取材做<span class='highlight'>涂片镜检</span>，发现革兰阳性粗大杆菌且伴有荚膜即可做出初步特异诊断。",
+                    metaphor: "🔍 视觉锚定：看【右侧临床救援区】。救援大队不等复杂的生化报告，直接拉出显微镜对着创口伤料扫视，一旦抓到**被透明膜包裹的粗大紫管**，立马启动重火力干预！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc61175188_1779287569.webp" 
+                },
+                {
+                    id: 10,
+                    question: "11. 临床上对抗气性坏疽极致厌氧环境、强行提升组织氧分压、直接抑制细菌繁殖的重要物理重火力方案是：",
+                    options: ["A. 彻底结痂包裹创口", "B. 局部外用强力抗生素", "C. 高压氧舱治疗", "D. 局部红外线高热烘烤", "E. 大剂量注射破伤风抗毒素"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：作为专性厌氧菌，产气荚膜梭菌对氧极其敏感。<span class='highlight'>高压氧舱治疗</span>能强行提升受损组织的氧分压，从而破坏厌氧微环境，抑制细菌增长和毒素产生。",
+                    metaphor: "🛸 视觉锚定：望向【最右侧救援区】！那里部署了一尊巨型的纯金色密封<span class='highlight'>【高压氧舱】</span>，它就像环境反制大杀器，正往伤口疯狂灌注高浓度氧气，强行掐断厌氧工厂的动力源！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc61458c37_1779287572.webp" 
+                },
+                {
+                    id: 11,
+                    question: "12. 气性坏疽在临床上防范和救治的第一道关键防线是：",
+                    options: ["A. 早期口服抗生素预防", "B. 伤口彻底早期清创与扩创", "C. 紧急注射白百破三联疫苗", "D. 局部涂抹中药膏剂", "E. 严密缝合伤口以防外界污染"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：气性坏疽防治的首要原则是<span class='highlight'>尽早彻底清创</span>，切除坏死组织、敞开伤口、用氧化剂（如过氧化氢）冲洗，破坏局部的厌氧微环境。",
+                    metaphor: "⚔️ 视觉锚定：【右侧物理清除方案】。看那个手执**“P”字重型大剑（青霉素）**的战士，他正配合清创铲刀，无型地把伤口深部的死肉彻底切除、彻底敞开，让创口重见天日！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc61425911_1779287572.webp" 
+                },
+                {
+                    id: 12,
+                    question: "13. 产气荚膜梭菌在卵黄琼脂平板上培养时，其产生的$\alpha$毒素会分解卵黄中的卵磷脂，这一特异性生化反应被称为：",
+                    options: ["A. 肥达反应", "B. 外斐反应", "C. Nagler 反应", "D. 卫星现象", "E. 串珠实验"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：产气荚膜梭菌可在含有卵黄的培养基上发生<span class='highlight'>Nagler 反应</span>。$\alpha$毒素分解卵卵脂后，会在菌落周围产生肉眼可见的乳白色浑浊沉淀环。",
+                    metaphor: "🍳 视觉锚定：来到【左侧生化区面板1】。观察那个破碎的卵黄沉淀，$\alpha$毒素在分解了卵卵脂后，菌落边缘像升起了一圈**“日晕般的白色烟雾环”**，这个视觉特征在说明书上大字写着：Nagler反应！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dc616ac86d_1779287574.webp" 
+                }
+            ];
+
+            let workingQueue = []; 
+            let currentIndex = 0;
+            let totalHitsToWin = originalQuizData.length;
+            let hitsRemaining = totalHitsToWin;
+            
+            let combo = 0;
+            let timerInterval;
+            let timeLeft = 15;
+            let wrongHistory = new Set(); 
+
+            let audioCtx = null;
+            let bgmInterval = null;
+            let isBgmPlaying = false;
+
+            function initAudio() { 
+                if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+                if(audioCtx.state === 'suspended') { audioCtx.resume(); } 
+            }
+
+            function startBGM() {
+                if(isBgmPlaying || !audioCtx) return;
+                isBgmPlaying = true;
+                let tick = 0;
+                bgmInterval = setInterval(() => {
+                    if(audioCtx.state === 'suspended') return;
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'triangle'; 
+                    if(tick % 4 === 0) { 
+                        osc.frequency.setValueAtTime(90, audioCtx.currentTime); gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                    } else { 
+                        osc.frequency.setValueAtTime(110, audioCtx.currentTime); gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+                    }
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.15);
+                    tick++;
+                }, 500); 
+            }
+
+            function stopBGM() { isBgmPlaying = false; clearInterval(bgmInterval); }
+
+            function playTone(type) {
+                if(!audioCtx) return;
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                if(type === 'correct') { 
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(660, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25); osc.start(); osc.stop(audioCtx.currentTime + 0.25); 
+                } else if (type === 'wrong') { 
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(120, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                } else if (type === 'fever') { 
+                    osc.type = 'square'; osc.frequency.setValueAtTime(900, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1800, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                } else if (type === 'win') { 
+                    const freqs = [523, 659, 784, 1046]; 
+                    freqs.forEach((f, i) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.setValueAtTime(0, audioCtx.currentTime + i*0.08); g.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + i*0.08 + 0.04); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i*0.08 + 0.8); o.start(audioCtx.currentTime + i*0.08); o.stop(audioCtx.currentTime + i*0.08 + 0.8); }); 
+                }
+            }
+
+            let particleInterval = null;
+            const vfxLayer = document.getElementById('vfx-layer');
+
+            function startFeverVFX() {
+                if(particleInterval) return;
+                particleInterval = setInterval(() => {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = Math.random() * 100 + '%'; p.style.width = p.style.height = (Math.random() * 5 + 3) + 'px';
+                    p.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+                    vfxLayer.appendChild(p); setTimeout(() => p.remove(), 2500);
+                }, 100);
+            }
+
+            function stopFeverVFX() { clearInterval(particleInterval); particleInterval = null; vfxLayer.innerHTML = ''; }
+
+            function triggerWinVFX() {
+                for(let i=0; i<40; i++) {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = 50 + (Math.random() * 30 - 15) + '%'; p.style.top = 40 + (Math.random() * 30 - 15) + '%';
+                    p.style.width = p.style.height = (Math.random() * 8 + 4) + 'px';
+                    p.style.backgroundColor = `hsl(${Math.random() * 40 + 260}, 90%, 65%)`; 
+                    p.style.transform = `translate(${Math.random()*300-150}px, ${Math.random()*300-150}px)`;
+                    p.style.animation = 'floatUp 1.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards';
+                    vfxLayer.appendChild(p);
+                }
+                setTimeout(() => { vfxLayer.innerHTML = ''; }, 2000);
+            }
+
+            const introScreen = document.getElementById('intro-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const endScreen = document.getElementById('end-screen');
+            const mainContainer = document.getElementById('main-container');
+            const rpgHeader = document.getElementById('rpg-header');
+            const hpBar = document.getElementById('hp-bar');
+            const hpText = document.getElementById('hp-text');
+            const comboText = document.getElementById('combo-text');
+            const timeLeftSpan = document.getElementById('time-left');
+            const optionsContainer = document.getElementById('options-container');
+            const hintBtn = document.getElementById('hint-btn');
+            const hintContainer = document.getElementById('hint-container');
+            const hintImg = document.getElementById('hint-img');
+            const feedbackCard = document.getElementById('feedback-card');
+            const retryWarning = document.getElementById('retry-warning');
+            const wrongGallery = document.getElementById('wrong-gallery');
+
+            window.startQuiz = function() {
+                initAudio(); startBGM(); 
+                workingQueue = [...originalQuizData]; totalHitsToWin = originalQuizData.length; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+                
+                updateUI();
+                introScreen.classList.add('hidden'); endScreen.classList.add('hidden'); quizScreen.classList.remove('hidden');
+                rpgHeader.style.display = 'flex';
+                loadQuestion();
+            };
+
+            window.restartQuiz = function() {
+                clearInterval(timerInterval); stopBGM(); stopFeverVFX();
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+
+                hpBar.style.width = '100%'; hpText.innerText = hitsRemaining;
+                comboText.classList.remove('show'); document.body.classList.remove('fever-mode');
+                feedbackCard.classList.remove('show'); hintContainer.style.display = 'none'; hintBtn.style.display = 'none';
+                
+                endScreen.classList.add('hidden'); quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                introScreen.classList.remove('hidden');
+            };
+
+            window.goToNext = function() {
+                window.location.href = "#";
+            };
+
+            function updateUI() {
+                hpText.innerText = hitsRemaining;
+                hpBar.style.width = `${(hitsRemaining / totalHitsToWin) * 100}%`;
+                if(combo > 0) {
+                    comboText.innerText = `Combo x${combo}! 🔥`; comboText.classList.add('show');
+                    if(combo >= 3) { document.body.classList.add('fever-mode'); startFeverVFX(); }
+                } else {
+                    comboText.classList.remove('show'); document.body.classList.remove('fever-mode'); stopFeverVFX();
+                }
+            }
+
+            function startTimer() {
+                clearInterval(timerInterval); timeLeft = 15; timeLeftSpan.innerText = timeLeft;
+                document.getElementById('timer-badge').classList.remove('danger');
+                timerInterval = setInterval(() => {
+                    timeLeft--; timeLeftSpan.innerText = timeLeft;
+                    if(timeLeft <= 5) document.getElementById('timer-badge').classList.add('danger');
+                    if(timeLeft <= 0) { clearInterval(timerInterval); handleTimeout(); }
+                }, 1000);
+            }
+
+            function loadQuestion() {
+                feedbackCard.classList.remove('show'); retryWarning.style.display = 'none'; hintContainer.style.display = 'none';
+                const currentQ = workingQueue[currentIndex];
+                document.getElementById('question-text').innerHTML = currentQ.question;
+                
+                if (combo >= 1 && currentQ.imageUrl) {
+                    hintBtn.style.display = 'block'; hintBtn.innerText = `🔍 消耗 1 Combo 刮开视觉线索 (当前 x${combo})`;
+                } else {
+                    hintBtn.style.display = 'none';
+                }
+
+                optionsContainer.innerHTML = '';
+                currentQ.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button'); btn.innerText = opt; btn.classList.add('option-btn');
+                    btn.onclick = () => window.resolveAnswer(idx, btn);
+                    optionsContainer.appendChild(btn);
+                });
+                startTimer();
+            }
+
+            window.useHint = function() {
+                if (combo < 1) return;
+                combo--; updateUI();
+                hintBtn.style.display = 'none'; hintContainer.style.display = 'block';
+                hintImg.src = workingQueue[currentIndex].imageUrl; hintImg.classList.add('revealed');
+                setTimeout(() => { hintImg.classList.remove('revealed'); }, 3000);
+            };
+
+            function handleTimeout() {
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(btn => btn.disabled = true);
+                optionsButtons[currentQ.correctAnswer].classList.add('correct');
+                processResult(false, currentQ, "🚨 高压氧舱气压不足！魔王在极度缺氧的深部伤口中疯狂增殖！");
+            }
+
+            window.resolveAnswer = function(idx, btn) {
+                clearInterval(timerInterval);
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(b => b.disabled = true); hintBtn.style.display = 'none';
+
+                const isCorrect = (idx === currentQ.correctAnswer);
+                if (isCorrect) btn.classList.add('correct');
+                else { btn.classList.add('wrong'); optionsButtons[currentQ.correctAnswer].classList.add('correct'); }
+                processResult(isCorrect, currentQ, isCorrect ? "✅ 物理清创成功！切断了厌氧气肿通道！" : "❌ 火力被防御！大魔王重整工厂秩序并将重新在末尾现身！");
+            };
+
+            function processResult(isCorrect, q, defaultMsg) {
+                if (isCorrect) {
+                    hitsRemaining--; combo++; playTone(combo >= 3 ? 'fever' : 'correct');
+                    retryWarning.style.color = "#1b5e20"; retryWarning.style.background = "#e8f5e9";
+                } else {
+                    combo = 0; wrongHistory.add(q.id); 
+                    mainContainer.classList.add('shake'); setTimeout(()=>mainContainer.classList.remove('shake'), 400);
+                    
+                    if(hitsRemaining < totalHitsToWin) { hitsRemaining++; }
+                    workingQueue.push(q); playTone('wrong');
+                    retryWarning.style.color = "#b71c1c"; retryWarning.style.background = "#ffebee";
+                }
+
+                updateUI();
+                document.getElementById('fact-text').innerHTML = q.fact;
+                document.getElementById('metaphor-text').innerHTML = q.metaphor;
+                const fbImg = document.getElementById('feedback-img');
+                if (q.imageUrl) { fbImg.src = q.imageUrl; fbImg.style.display = 'block'; } else { fbImg.style.display = 'none'; }
+                
+                retryWarning.innerText = defaultMsg; retryWarning.style.display = 'block';
+                feedbackCard.classList.add('show');
+            }
+
+            window.nextQuestion = function() {
+                currentIndex++;
+                if (hitsRemaining > 0 && currentIndex < workingQueue.length) { loadQuestion(); } 
+                else {
+                    playTone('win'); stopBGM(); stopFeverVFX(); triggerWinVFX(); document.body.classList.remove('fever-mode');
+                    setTimeout(() => {
+                        quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                        generateGallery(); endScreen.classList.remove('hidden');
+                    }, 400);
+                }
+            };
+
+            function generateGallery() {
+                wrongGallery.innerHTML = ''; const subtitle = document.getElementById('gallery-subtitle');
+                if (wrongHistory.size === 0) {
+                    subtitle.innerHTML = "<span style='color: var(--correct-color); font-weight: bold;'>🌟 奇迹！你成功用高压氧完美拦截了充气工厂！未留下任何盲区。</span>";
+                    return;
+                }
+                subtitle.innerHTML = `以下是你曾遗忘的 <b style="color:var(--primary-color)">${wrongHistory.size}</b> 处高压工厂隐蔽点。点击图片复盘：`;
+                
+                wrongHistory.forEach(id => {
+                    const q = originalQuizData.find(item => item.id === id);
+                    if (!q || !q.imageUrl) return;
+                    const card = document.createElement('div'); card.className = 'gallery-item';
+                    card.innerHTML = `
+                        <div class="gallery-inner">
+                            <div class="gallery-front" style="background-image: url('${q.imageUrl}')"></div>
+                            <div class="gallery-back">
+                                <div class="gallery-back-title">${q.question.replace(/<[^>]+>/g, '').substring(3, 25)}...</div>
+                                <div class="gallery-back-desc">${q.metaphor.replace(/<[^>]+>/g, '')}</div>
+                            </div>
+                        </div>
+                    `;
+                    card.onclick = function() { this.classList.toggle('flipped'); };
+                    wrongGallery.appendChild(card);
+                });
+            }
+        } catch (error) { alert("记忆宫殿引擎配置异常: " + error.message); }
+    </script>
+</body>
+</html>
