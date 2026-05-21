@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医小晨 - 志贺菌 沉浸心流完全体</title>
+    <style>
+        :root {
+            /* 志贺菌：赤月下的僵直忍者道场暗红与夜行黑调 */
+            --primary-color: #b71c1c; /* 代表革兰阴性(G-)猩红环境的主色 */
+            --primary-light: #ffebee;
+            --primary-dark: #7f0000;
+            --bg-color: #1c1414; /* 暗夜道场黑红背景 */
+            --card-bg: #ffffff;
+            --correct-color: #43a047;
+            --wrong-color: #e53935;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-lg: 0 15px 35px rgba(183, 28, 28, 0.15);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s;
+            overflow-x: hidden;
+        }
+
+        /* 狂暴模式与氛围特效（赤月狂暴） */
+        body.fever-mode {
+            background-color: #2a0808;
+            animation: feverPulse 2s infinite alternate;
+        }
+        @keyframes feverPulse {
+            0% { box-shadow: inset 0 0 50px rgba(229, 57, 53, 0.3); }
+            100% { box-shadow: inset 0 0 150px rgba(229, 57, 53, 0.7); }
+        }
+
+        #vfx-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute; background: rgba(229, 57, 53, 0.8);
+            border-radius: 50%; animation: floatUp linear forwards;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        .app-container {
+            max-width: 600px; width: 100%; background-color: var(--card-bg);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+            overflow: hidden; position: relative; z-index: 10;
+        }
+
+        /* 物理震动反馈 */
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* Boss 血条与 Combo UI */
+        .rpg-header {
+            background-color: #251515; padding: 15px 20px; display: none;
+            flex-direction: column; gap: 8px; border-bottom: 3px solid #000;
+        }
+        .boss-info { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 14px; }
+        .hp-bar-bg { width: 100%; height: 14px; background-color: #523838; border-radius: 7px; overflow: hidden; border: 1px solid #000; }
+        .hp-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #e53935, #b71c1c); width: 100%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(229, 57, 53, 0.8);
+        }
+        .combo-text {
+            color: #ffeb3b; font-style: italic; font-size: 14px; font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s;
+        }
+        .combo-text.show { opacity: 1; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .content-padding { padding: 30px; }
+        .section-title { color: var(--primary-dark); font-size: 22px; margin-bottom: 20px; text-align: center; font-weight: 800; }
+        
+        /* 视频跳转引导卡片 */
+        .video-banner {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+        .video-banner:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(183, 28, 28, 0.25);
+        }
+        .video-banner-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .video-title {
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-size: 15px;
+        }
+        .video-desc {
+            font-size: 13px;
+            color: #555;
+        }
+        .video-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(183, 28, 28, 0.3);
+            transition: background 0.2s;
+        }
+        .video-banner:hover .video-btn {
+            background: var(--primary-dark);
+        }
+
+        .panorama-img { width: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: 20px; display: block; min-height: 180px; background-color: var(--primary-light); object-fit: cover; }
+
+        /* 介绍区块 */
+        .feature-block {
+            text-align: left; background: #fff; padding: 15px; border-radius: 10px;
+            margin-bottom: 15px; border: 1px solid #eee;
+        }
+        .feature-title { font-weight: bold; color: var(--primary-dark); margin-bottom: 5px; font-size: 15px; }
+        .feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dashed #eee; }
+        .timer-badge { background-color: var(--primary-light); color: var(--primary-dark); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; }
+        .timer-badge.danger { background-color: #fde8e8; color: var(--wrong-color); animation: pulse 1s infinite; }
+        
+        /* 题干与选项 */
+        .question-text { font-size: 18px; font-weight: 500; margin-bottom: 25px; line-height: 1.6; color: #34495e; }
+        .q-hl { 
+            font-weight: 800; color: #000; 
+            background: linear-gradient(120deg, rgba(229, 57, 53, 0.2) 0%, rgba(229, 57, 53, 0.2) 100%);
+            background-repeat: no-repeat; background-size: 100% 40%; background-position: 0 88%;
+            padding: 0 2px;
+        }
+
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background-color: #fff; border: 2px solid #eaeded; border-radius: var(--radius-md); padding: 16px 20px; font-size: 16px; color: var(--text-main); text-align: left; cursor: pointer; transition: all 0.2s ease; font-weight: 500;}
+        .option-btn:hover:not(:disabled) { border-color: var(--primary-color); background-color: var(--primary-light); transform: translateY(-2px); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; transform: none; }
+        .option-btn.correct { background-color: #e8f5e9; border-color: var(--correct-color); color: #1b5e20; font-weight: bold; }
+        .option-btn.wrong { background-color: #ffebee; border-color: var(--wrong-color); color: #b71c1c; }
+
+        /* 场外援助 */
+        .hint-btn {
+            background: none; border: 1px dashed var(--primary-color); color: var(--primary-color);
+            padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; 
+            width: 100%; margin-top: 15px; transition: 0.2s; display: none;
+        }
+        .hint-btn:hover { background: var(--primary-light); }
+        .hint-img-container { display: none; margin-top: 15px; position: relative; border-radius: 8px; overflow: hidden; }
+        .hint-img { width: 100%; filter: blur(15px); transition: filter 0.3s; }
+        .hint-img.revealed { filter: blur(0); }
+        .hint-overlay-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 20px; pointer-events: none; }
+
+        /* 解析区 */
+        .feedback-card { display: none; margin-top: 25px; background-color: var(--card-bg); border: 2px solid var(--primary-light); padding: 20px; border-radius: var(--radius-md); position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.03); animation: slideUpFade 0.5s forwards; }
+        .feedback-card::before { content: ''; position: absolute; left: -2px; top: -2px; bottom: -2px; width: 6px; background-color: var(--primary-color); border-radius: 10px 0 0 10px; }
+        .feedback-card.show { display: block; }
+        .feedback-img { width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; }
+        
+        .highlight { color: var(--primary-color); font-weight: bold; background: var(--primary-light); padding: 2px 6px; border-radius: 4px; margin: 0 2px; }
+        .fact-text { font-size: 15px; color: #455a64; margin-bottom: 12px; line-height: 1.7; background-color: #f5f7fa; padding: 12px 15px; border-radius: 8px; }
+        .metaphor-text { font-size: 15px; color: #333; line-height: 1.7; padding: 0 5px; }
+        
+        .retry-warning { display: none; margin-top: 15px; padding: 10px; border-radius: 8px; background-color: #fff3e0; color: #e65100; font-size: 14px; font-weight: bold; text-align: center; }
+
+        /* 复盘画廊 */
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
+        .gallery-item { perspective: 1000px; cursor: pointer; height: 160px; }
+        .gallery-inner { width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; border-radius: 12px; box-shadow: var(--shadow-sm); }
+        .gallery-item:hover .gallery-inner { box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .gallery-item.flipped .gallery-inner { transform: rotateY(180deg); }
+        
+        .gallery-front, .gallery-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 12px; overflow: hidden; }
+        .gallery-front { background-size: cover; background-position: center; filter: grayscale(100%) brightness(0.7); transition: filter 0.3s; display: flex; align-items: center; justify-content: center; }
+        .gallery-front::after { content: '点击翻转 🔄'; color: white; background: rgba(183, 28, 28, 0.85); padding: 8px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .gallery-item.flipped .gallery-front { filter: grayscale(0%) brightness(1); } 
+        
+        .gallery-back { background-color: var(--primary-light); transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 2px solid var(--primary-color); }
+        .gallery-back-title { font-size: 13px; font-weight: bold; color: var(--primary-dark); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .gallery-back-desc { font-size: 12px; color: var(--text-main); line-height: 1.5; }
+
+        .primary-btn { width: 100%; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(183, 28, 28, 0.3); margin-top: 15px; }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(183, 28, 28, 0.4); }
+        
+        .secondary-btn { background: #f1f3f5; color: #555; box-shadow: none; margin-top: 10px; font-size: 15px; padding: 14px;}
+        .secondary-btn:hover { background: #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transform: translateY(-1px); }
+
+        .hidden { display: none !important; }
+
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="vfx-layer"></div>
+
+    <div class="app-container" id="main-container">
+        <div class="rpg-header" id="rpg-header">
+            <div class="boss-info">
+                <span>🥷 僵直忍者道场：志贺大魔王</span>
+                <span class="combo-text" id="combo-text">Combo x3! 🔥</span>
+                <span>剩余HP: <span id="hp-text">12</span></span>
+            </div>
+            <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-bar"></div></div>
+        </div>
+
+        <div id="intro-screen" class="content-padding">
+            <h1 class="section-title">🏯 僵直道场突袭战：志贺菌属</h1>
+
+            <a href="http://xhslink.com/o/3vW3EudCeqV" class="video-banner" id="xhs-link" target="_blank">
+                <div class="video-banner-content">
+                    <span class="video-title">▶️ 建议先花3分钟看下这期【志贺菌记忆宫殿电影】</span>
+                    <span class="video-desc">配合小红书全景视觉剧情与音效，看完再来刷题体验翻倍哦 ⸜(๑'ᵕ'๑)⸝⋆*</span>
+                </div>
+                <span class="video-btn">去小红书观看 ↗</span>
+            </a>
+
+            <img class="panorama-img" id="intro-panorama" src="https://img.cdn1.vip/i/6a0d704eb3843_1779265614.webp" alt="志贺菌全景图">
+
+            <div class="feature-block">
+                <div class="feature-title">📚 期末真题与高频考点绑定</div>
+                <div class="feature-desc">结合期末选择题库，将高频题与“无动力水泥脚”、“唐装久病福氏菌”、“无色水晶莲” 全面交叉，做题即在脑海里给忍者拼图！</div>
+            </div>
+            <div class="feature-block">
+                <div class="feature-title">⚡️ 赤月限制·心流引擎</div>
+                <div class="feature-desc">15秒倒计时高压强记，忘词可消耗 Combo 刮开视觉锚点。用打游戏的方法，陪你搞定肠道致病菌的梦魇！</div>
+            </div>
+
+            <button class="primary-btn" onclick="startQuiz()" style="margin-top: 10px;">开启战火洗礼 ⚔️</button>
+        </div>
+
+        <div id="quiz-screen" class="content-padding hidden">
+            <div class="header-info">
+                <span style="font-weight: bold; color: var(--primary-color);">🎯 志贺菌高频通关</span>
+                <div class="timer-badge" id="timer-badge">⏳ <span id="time-left">15</span>s</div>
+            </div>
+
+            <div class="question-text" id="question-text">题目加载中...</div>
+            <div class="options-container" id="options-container"></div>
+            
+            <button class="hint-btn" id="hint-btn" onclick="useHint()">🔍 消耗 1 Combo 刮开道场线索</button>
+            <div class="hint-img-container" id="hint-container">
+                <img class="hint-img" id="hint-img" src="">
+                <div class="hint-overlay-text" id="hint-overlay">已刮开 (3秒后变暗)</div>
+            </div>
+
+            <div class="feedback-card" id="feedback-card">
+                <img id="feedback-img" class="feedback-img" src="">
+                <div class="fact-text" id="fact-text"></div>
+                <div class="metaphor-text" id="metaphor-text"></div>
+                <div class="retry-warning" id="retry-warning"></div>
+                <button class="primary-btn" id="next-btn" onclick="nextQuestion()">继续追击 ➡️</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="content-padding hidden">
+            <h1 class="section-title">🎉 志贺道场击破</h1>
+            <p class="section-subtitle" id="gallery-subtitle" style="margin-bottom: 15px;">以下是你刚刚遗忘的灰暗碎片。点击图片，重新点亮视觉锚点并翻转复盘。</p>
+            
+            <div class="gallery-grid" id="wrong-gallery"></div>
+
+            <button class="primary-btn" onclick="goToNext()">🗺️ 开启下一战役</button>
+            <button class="primary-btn secondary-btn" onclick="restartQuiz()">🔄 重置当前关卡</button>
+
+            <p style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 20px;">
+                遗忘碎片已全部重铸。多看几遍道场全景图，期末绝不丢分！
+            </p>
+        </div>
+    </div>
+
+    <script>
+        try {
+            const CustomMedia = {
+                introImage: "https://img.cdn1.vip/i/6a0d704eb3843_1779265614.webp", 
+                xhsLink: "http://xhslink.com/o/3vW3EudCeqV",   
+                bgm: "",        
+                correct: "",    
+                wrong: "",      
+                fever: "",      
+                win: ""         
+            };
+
+            // 👁️ 志贺菌题库数据 —— 完美修正题目连续 id 冲突 Bug
+            const originalQuizData = [
+                {
+                    id: 0,
+                    question: "1. 鉴别肠道致病菌与非致病菌，经常选用的生化反应试验是：",
+                    options: ["A. 葡萄糖发酵试验", "B. 乳糖发酵试验", "C. 甘露醇发酵试验", "D. 吲哚试验", "E. 尿素酶分解试验"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：肠道致病菌（志贺菌、沙门菌）<span class='highlight'>一般不发酵乳糖</span>，而非致病菌（如普通大肠埃希菌）发酵乳糖，这是肠道杆菌生化鉴定的最重要核心初筛。",
+                    metaphor: "🏯 视觉锚定：看鉴定面板！道场中央摆着<span class='highlight'>无色水晶莲</span>。大肠埃希菌等常驻百姓能把乳糖染成有色，而志贺大魔王作为致病菌，一般不发酵乳糖，只能在SS平板上留下无色半透明的结晶。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d705bc1df9_1779265627.webp" 
+                },
+                {
+                    id: 1,
+                    question: "2. 在生化及生物学特性上，志贺菌属不具有的物质或特征是：",
+                    options: ["A. 内毒素", "B. 外毒素", "C. O抗原", "D. 菌毛", "E. H抗原"],
+                    correctAnswer: 4, 
+                    fact: "🎯 核心事实：志贺菌<span class='highlight'>无鞭毛，因此绝无H抗原</span>（鞭毛抗原），这和有周身鞭毛的大肠埃希菌与沙门菌形成鲜明对比。",
+                    metaphor: "🧱 视觉锚定：盯着那块核心警告牌！全场忍者双脚全被水泥死死浇筑在石块上（无动力/无鞭毛）。鞭毛就是移动的动力，既然完全动弹不得，自然绝不可能拥有H（鞭毛）抗原！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d705dc1673_1779265629.webp"
+                },
+                {
+                    id: 2,
+                    question: "3. 临床上初步将志贺菌从肠道致病菌标本中鉴别出来的最基础生化反应方法是：",
+                    options: ["A. 菊糖发酵试验", "B. 尿素分解试验", "C. 胆汁溶解试验", "D. 肥达试验", "E. 克氏双糖铁（KIA）接种试验"],
+                    correctAnswer: 4, 
+                    fact: "🎯 核心事实：初步鉴别志贺菌采用<span class='highlight'>克氏双糖铁培养基</span>。其反应特点为分解葡萄糖产酸不产气，不分解乳糖，无动力。",
+                    metaphor: "🏯 视觉锚定：看中央的双糖铁演武台。志贺菌忍者由于水泥浇筑脚（无动力），且不碰乳糖（无色水晶莲），在双糖管里只会闷声破坏葡萄糖（产酸不产气），绝不会像其他细菌一样大肆产气扩散。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d705b24625_1779265627.webp"
+                },
+                {
+                    id: 3,
+                    question: "4. 目前我国引起细菌性痢疾、高居临床分离率第一位的志贺菌群是：",
+                    options: ["A. 痢疾志贺菌（A群）", "B. 福氏志贺菌（B群）", "C. 鲍氏志贺菌（C群）", "D. 宋内志贺菌（D群）", "E. 产毒志贺菌"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：我国最常见的细菌性痢疾病原菌是<span class='highlight'>福氏志贺菌（B群）</span>，且感染后极易转变为慢性。",
+                    metaphor: "🇨🇳 视觉锚定：看中央三大核心弟子中的福氏！他身穿一件中国传统红唐装，面容苍老虚弱，代表他是我国最常见且极易抓着人不放转变为慢性的久病缠身型菌群。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d705e113d9_1779265630.webp" 
+                },
+                {
+                    id: 4,
+                    question: "5. 关于志贺菌属各群生化及毒力特征，下列叙述错误的是：",
+                    options: ["A. 宋内志贺菌多引起轻型感染，欧美多见", "B. 痢疾志贺菌是唯一不发酵甘露醇的志贺菌群", "C. 福氏志贺菌在我国最流行且易转慢性", "D. 志贺菌属中仅有福氏志贺菌产生外毒素", "E. 宋内志贺菌是唯一拥有鸟氨酸脱羧酶的群"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：志贺菌属中，毒力最强且主要产生强烈志贺外毒素的是痢疾志贺菌（A群），而非福氏志贺菌。",
+                    metaphor: "☠️ 视觉锚定：看被锁链锁住的痢疾志贺菌！他正在疯狂吐血（毒力最强），他狠狠地拒绝了旁人递过来的甘露（唯一不发酵甘露醇）。他体内藏着破坏力极强的外毒素，绝不是好惹的。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d7067376af_1779265639.webp" 
+                },
+                {
+                    id: 5,
+                    question: "6. 一个5岁男孩随母亲旅游，回家3天后突发严重腹部痉挛痛、高热、多次血便，大便中有大量脓细胞、红细胞，并伴有里急后重感。最可能的诊断是：",
+                    options: ["A. 伤寒", "B. 急性典型细菌性痢疾", "C. 大肠杆菌肠炎", "D. 霍乱", "E. 阿米巴痢疾"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：发热、腹痛、里急后重、<span class='highlight'>黏液脓血便</span>是典型急性细菌性痢疾的标志性表现。",
+                    metaphor: "⚔️ 视觉锚定：看右侧的里急后重武士！他死死捂着肚子，表情极度痛苦。由于直肠结肠黏膜被志贺菌疯狂破坏，他不仅拉出黏液脓血便，还伴随不断想要排便却极其痛苦的里急后重感。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d7060495c2_1779265632.webp" 
+                },
+                {
+                    id: 6,
+                    question: "7. 2-7岁小儿在患细菌性痢疾时，常出现突发高热、神志不清、反复惊厥和休克，而肠道症状更为不明显。这种临床类型被称为：",
+                    options: ["A. 急性典型菌痢", "B. 慢性迁延型菌痢", "C. 中型细菌性痢疾", "D. 慢性隐匿型菌痢", "E. 中毒型细菌性痢疾"],
+                    correctAnswer: 4, 
+                    fact: "🎯 核心事实：<span class='highlight'>中毒型菌痢</span>多见于儿童，由内毒素引发，表现为严重的全身中毒症状（休克、惊厥），而早期肠道症状往往不明显。",
+                    metaphor: "⚡️ 视觉锚定：注意看画面最右下角被闪电劈中的幼童！这就是高频考点——小儿中毒型菌痢。他甚至还没来得及严重腹泻（消化道静默），就被强烈的内毒素风暴引发了全身抽搐和休克。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d706367fc4_1779265635.webp" 
+                },
+                {
+                    id: 7,
+                    question: "8. 志贺菌侵入肠道黏膜上皮细胞引发病变，其抗感染免疫在消化道黏膜表面主要依赖的抗体类型是：",
+                    options: ["A. IgG", "B. IgM", "C. sIgA（分泌型IgA）", "D. IgE", "E. IgD"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：志贺菌感染一般局限在肠黏膜，不入血。因此机体抵抗志贺菌主要依靠消化道局部的<span class='highlight'>分泌型IgA（sIgA）</span>。",
+                    metaphor: "🛡️ 视觉锚定：看道场右上方悬挂的巨大黏膜盾牌！因为志贺菌是个宅男，从不通过血流播散。我们不需要体内全身抗体御敌，只需在肠道黏膜筑起这面分泌型免疫球蛋白黄金巨盾就能建立安全防线。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d7067e5710_1779265639.webp" 
+                },
+                {
+                    id: 8,
+                    question: "9. 医院实验室在对疑似痢疾病人的粪便标本进行微生物学检查和采样运送时，下列操作错误的是：",
+                    options: ["A. 挑取粪便标本中带有脓血或黏液的部分进行培养", "B. 标本应尽量避免被尿液或外界化学消毒剂污染", "C. 如果不能及时送检，可将标本暂时暴露于室温酸性环境下冷冻", "D. 不能及时送检时，应将标本保存于30%甘油缓冲盐水运送", "E. 分离培养后最终必须进行血清学凝集鉴定确认"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：志贺菌在体外抵抗力极弱，<span class='highlight'>非常怕酸</span>。标本必须立即送检，或置于具有保护作用的30%甘油缓冲盐水中保存。",
+                    metaphor: "🧪 视觉锚定：看演武台旁边那罐红色的甘油缓冲液！志贺菌极其娇气，尤其怕酸。如果无法立即送检，必须把它装进这个甜甘油罐子里维持中性保护，否则细菌在酸性粪便里瞬间就死光了！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d70676cd26_1779265639.webp" 
+                },
+                {
+                    id: 9,
+                    question: "10. 某革兰阴性杆菌，在SS选择培养基上形成了无色半透明的细小菌落。动力试验阴性。分解葡萄糖产酸不产气，不分解乳糖。该细菌最可能是：",
+                    options: ["A. 大肠埃希菌", "B. 伤寒沙门菌", "C. 痢疾志贺菌", "D. 变形杆菌", "E. 鼠伤寒沙门菌"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：SS平板无色（不发酵乳糖）、无动力、葡萄糖产酸不产气，是<span class='highlight'>志贺菌</span>的标准生化铁证组合。",
+                    metaphor: "🏯 视觉锚定：将所有的记忆碎片拼起来 —— 无色水晶莲（SS平板无色不发酵乳糖） + 水泥浇筑脚（无动力） + 拒绝甘露的吐血忍者（痢疾志贺菌） = 直接一秒秒杀志贺菌！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d7069726c6_1779265641.webp" 
+                },
+                {
+                    id: 10,
+                    question: "11. 临床上为了鉴别从肠道标本中分离出的革兰阴性杆菌究竟是【志贺菌】还是【变形杆菌】，最快常选用的试验是：",
+                    options: ["A. 葡萄糖发酵试验", "B. 甲基红试验", "C. 尿素酶分解试验", "D. 枸橼酸盐利用试验", "E. 动力试验"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：变形杆菌能够极快地<span class='highlight'>分解尿素（尿素酶试验强阳性）</span>，而志贺菌和大肠埃希菌通常为阴性，借此可以迅速区分。",
+                    metaphor: "🏯 视觉锚定：自圆其说找线索！道场门外有个变形菌，他憋不住尿，在脑海里疯狂分解尿素。而志贺菌和普通大肠菌在道场内安分守己，尿素酶试验全为阴性！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d706f635a7_1779265647.webp" 
+                },
+                {
+                    id: 11,
+                    question: "12. 志贺菌产生的志贺毒素（外毒素）具有多种生物学毒性，但通常不包括以下哪种：",
+                    options: ["A. 破坏内皮细胞的细胞毒性", "B. 引起液体分泌的肠毒性", "C. 导致少尿、血尿的肾毒性", "D. 导致中枢神经系统坏死的神经毒性", "E. 直接溶解心肌细胞的心肌毒性"],
+                    correctAnswer: 4, 
+                    fact: "🎯 核心事实：志贺毒素具有<span class='highlight'>细胞毒性、肠毒性和神经毒性（破坏靶器官肾、脑、肠）</span>，但没有心肌毒性。",
+                    metaphor: "🥷 视觉锚定：记住吐血死囚的三个攻击方向。他的暗器直穿人的肠子（肠毒性）、脑袋（神经毒性）、肾脏（引起肾毒性综合征），形成三叉毒素。但任凭他再狂暴，也碰不到心脏（无心肌毒性）！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d706ff0c24_1779265647.webp" 
+                }
+            ];
+
+            let workingQueue = []; 
+            let currentIndex = 0;
+            const totalHitsToWin = originalQuizData.length;
+            let hitsRemaining = totalHitsToWin;
+            
+            let combo = 0;
+            let timerInterval;
+            let timeLeft = 15;
+            let wrongHistory = new Set(); 
+
+            let audioCtx = null;
+            let bgmInterval = null;
+            let isBgmPlaying = false;
+            let customBgmAudio = null;
+
+            function initAudio() { 
+                try {
+                    if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+                    if(audioCtx && audioCtx.state === 'suspended') { audioCtx.resume(); } 
+                } catch(e) { console.log("音频异常:", e); }
+            }
+
+            function startBGM() {
+                if(isBgmPlaying) return;
+                isBgmPlaying = true;
+                if (CustomMedia.bgm) {
+                    if (!customBgmAudio) { customBgmAudio = new Audio(CustomMedia.bgm); customBgmAudio.loop = true; }
+                    customBgmAudio.play().catch(e => console.log(e));
+                    return;
+                }
+                if (!audioCtx) return;
+                let tick = 0;
+                bgmInterval = setInterval(() => {
+                    if(!audioCtx || audioCtx.state === 'suspended') return;
+                    try {
+                        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                        osc.connect(gain); gain.connect(audioCtx.destination);
+                        osc.type = 'sawtooth'; 
+                        if(tick % 4 === 0) { 
+                            osc.frequency.setValueAtTime(100, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.12); gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                        } else { 
+                            osc.frequency.setValueAtTime(140, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.06); gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                        }
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                        osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.1);
+                        tick++;
+                    } catch(err){}
+                }, 500); 
+            }
+
+            function stopBGM() {
+                isBgmPlaying = false;
+                if (CustomMedia.bgm && customBgmAudio) { customBgmAudio.pause(); customBgmAudio.currentTime = 0; } 
+                else { clearInterval(bgmInterval); }
+            }
+
+            function playTone(type) {
+                if (type === 'correct' && CustomMedia.correct) { new Audio(CustomMedia.correct).play(); return; }
+                if (type === 'wrong' && CustomMedia.wrong) { new Audio(CustomMedia.wrong).play(); return; }
+                if (type === 'fever' && CustomMedia.fever) { new Audio(CustomMedia.fever).play(); return; }
+                if (type === 'win' && CustomMedia.win) { new Audio(CustomMedia.win).play(); return; }
+
+                if(!audioCtx || audioCtx.state === 'suspended') return;
+                try {
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    if(type === 'correct') { 
+                        osc.type = 'triangle'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.08); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25); osc.start(); osc.stop(audioCtx.currentTime + 0.25); 
+                    } else if (type === 'wrong') { 
+                        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.35); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35); osc.start(); osc.stop(audioCtx.currentTime + 0.35); 
+                    } else if (type === 'fever') { 
+                        osc.type = 'square'; osc.frequency.setValueAtTime(900, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1800, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.12, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35); osc.start(); osc.stop(audioCtx.currentTime + 0.35); 
+                    } else if (type === 'win') { 
+                        const freqs = [523, 659, 784, 1046, 1318]; 
+                        freqs.forEach((f, i) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.setValueAtTime(0, audioCtx.currentTime + i*0.08); g.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + i*0.08 + 0.04); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i*0.08 + 0.8); o.start(audioCtx.currentTime + i*0.08); o.stop(audioCtx.currentTime + i*0.08 + 0.8); }); 
+                    }
+                } catch(e){}
+            }
+
+            let particleInterval = null;
+            const vfxLayer = document.getElementById('vfx-layer');
+
+            function startFeverVFX() {
+                if(particleInterval) return;
+                particleInterval = setInterval(() => {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.width = p.style.height = (Math.random() * 5 + 2) + 'px';
+                    p.style.animationDuration = (Math.random() * 1.8 + 1.2) + 's';
+                    vfxLayer.appendChild(p);
+                    setTimeout(() => p.remove(), 3000);
+                }, 120);
+            }
+
+            function stopFeverVFX() { clearInterval(particleInterval); particleInterval = null; vfxLayer.innerHTML = ''; }
+
+            function triggerWinVFX() {
+                for(let i=0; i<60; i++) {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = 50 + (Math.random() * 30 - 15) + '%'; p.style.top = 40 + (Math.random() * 30 - 15) + '%';
+                    p.style.width = p.style.height = (Math.random() * 5 + 3) + 'px';
+                    p.style.backgroundColor = `hsl(${Math.random() * 20}, 100%, 50%)`; 
+                    p.style.transform = `translate(${Math.random()*250-125}px, ${Math.random()*250-125}px)`;
+                    p.style.animation = 'floatUp 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards';
+                    vfxLayer.appendChild(p);
+                }
+                setTimeout(() => { vfxLayer.innerHTML = ''; }, 2000);
+            }
+
+            const introScreen = document.getElementById('intro-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const endScreen = document.getElementById('end-screen');
+            const mainContainer = document.getElementById('main-container');
+            const rpgHeader = document.getElementById('rpg-header');
+            const hpBar = document.getElementById('hp-bar');
+            const hpText = document.getElementById('hp-text');
+            const comboText = document.getElementById('combo-text');
+            const timeLeftSpan = document.getElementById('time-left');
+            const optionsContainer = document.getElementById('options-container');
+            const hintBtn = document.getElementById('hint-btn');
+            const hintContainer = document.getElementById('hint-container');
+            const hintImg = document.getElementById('hint-img');
+            const feedbackCard = document.getElementById('feedback-card');
+            const retryWarning = document.getElementById('retry-warning');
+            const wrongGallery = document.getElementById('wrong-gallery');
+
+            if (CustomMedia.introImage) { document.getElementById('intro-panorama').src = CustomMedia.introImage; }
+            if (CustomMedia.xhsLink) { document.getElementById('xhs-link').href = CustomMedia.xhsLink; }
+
+            window.startQuiz = function() {
+                initAudio(); startBGM(); 
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+                
+                updateUI();
+                introScreen.classList.add('hidden'); endScreen.classList.add('hidden'); quizScreen.classList.remove('hidden');
+                rpgHeader.style.display = 'flex';
+                loadQuestion();
+            };
+
+            window.restartQuiz = function() {
+                clearInterval(timerInterval); stopBGM(); stopFeverVFX();
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+
+                hpBar.style.width = '100%'; hpText.innerText = hitsRemaining;
+                comboText.classList.remove('show'); document.body.classList.remove('fever-mode');
+                feedbackCard.classList.remove('show'); hintContainer.style.display = 'none'; hintBtn.style.display = 'none';
+                
+                endScreen.classList.add('hidden'); quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                introScreen.classList.remove('hidden');
+            };
+
+            window.goToNext = function() {
+                alert("恭喜通关！下一战役【沙门菌属的围城阻击战】正在紧急开发部署中，敬请期待！");
+            };
+
+            function updateUI() {
+                hpText.innerText = hitsRemaining;
+                hpBar.style.width = `${(hitsRemaining / totalHitsToWin) * 100}%`;
+                if(combo > 0) {
+                    comboText.innerText = `Combo x${combo}! 🔥`; comboText.classList.add('show');
+                    if(combo >= 3) { document.body.classList.add('fever-mode'); startFeverVFX(); }
+                } else {
+                    comboText.classList.remove('show'); document.body.classList.remove('fever-mode'); stopFeverVFX();
+                }
+            }
+
+            function startTimer() {
+                clearInterval(timerInterval); timeLeft = 15; timeLeftSpan.innerText = timeLeft;
+                document.getElementById('timer-badge').classList.remove('danger');
+                timerInterval = setInterval(() => {
+                    timeLeft--; timeLeftSpan.innerText = timeLeft;
+                    if(timeLeft <= 5) document.getElementById('timer-badge').classList.add('danger');
+                    if(timeLeft <= 0) { clearInterval(timerInterval); handleTimeout(); }
+                }, 1000);
+            }
+
+            function loadQuestion() {
+                try {
+                    feedbackCard.classList.remove('show'); retryWarning.style.display = 'none'; hintContainer.style.display = 'none';
+                    const currentQ = workingQueue[currentIndex];
+                    document.getElementById('question-text').innerHTML = currentQ.question;
+                    
+                    if (combo >= 1 && currentQ.imageUrl) {
+                        hintBtn.style.display = 'block'; hintBtn.innerText = `🔍 消耗 1 Combo 刮开道场线索 (当前 x${combo})`;
+                    } else {
+                        hintBtn.style.display = 'none';
+                    }
+
+                    optionsContainer.innerHTML = '';
+                    currentQ.options.forEach((opt, idx) => {
+                        const btn = document.createElement('button'); btn.innerText = opt; btn.classList.add('option-btn');
+                        btn.onclick = () => window.resolveAnswer(idx, btn);
+                        optionsContainer.appendChild(btn);
+                    });
+                    startTimer();
+                } catch (err) { console.error("题目生命周期沙盒拦截保护:", err); }
+            }
+
+            window.useHint = function() {
+                if (combo < 1) return;
+                combo--; updateUI();
+                hintBtn.style.display = 'none'; hintContainer.style.display = 'block';
+                hintImg.src = workingQueue[currentIndex].imageUrl; hintImg.classList.add('revealed');
+                setTimeout(() => { hintImg.classList.remove('revealed'); }, 3000);
+            };
+
+            function handleTimeout() {
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(btn => btn.disabled = true);
+                optionsButtons[currentQ.correctAnswer].classList.add('correct');
+                processResult(false, currentQ);
+            }
+
+            window.resolveAnswer = function(idx, btn) {
+                clearInterval(timerInterval);
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(b => b.disabled = true); hintBtn.style.display = 'none';
+
+                const isCorrect = (idx === currentQ.correctAnswer);
+                if (isCorrect) btn.classList.add('correct');
+                else { btn.classList.add('wrong'); optionsButtons[currentQ.correctAnswer].classList.add('correct'); }
+                processResult(isCorrect, currentQ);
+            };
+
+            function processResult(isCorrect, q) {
+                let msg = "";
+                if (isCorrect) {
+                    hitsRemaining--; combo++; playTone(combo >= 3 ? 'fever' : 'correct');
+                    msg = "✅ 绝杀成功！志贺菌防线被你彻底洞穿！";
+                    retryWarning.style.color = "#2e7d32"; retryWarning.style.background = "#e8f5e9";
+                } else {
+                    combo = 0; wrongHistory.add(q.id); 
+                    mainContainer.classList.add('shake'); setTimeout(()=>mainContainer.classList.remove('shake'), 400);
+                    workingQueue.push(q); playTone('wrong');
+                    msg = "❌ 忍者已借暗器复活遁逃至队伍末尾，稳住心态准备反击！";
+                    retryWarning.style.color = "#c62828"; retryWarning.style.background = "#ffebee";
+                }
+
+                updateUI();
+                document.getElementById('fact-text').innerHTML = q.fact;
+                document.getElementById('metaphor-text').innerHTML = q.metaphor;
+                const fbImg = document.getElementById('feedback-img');
+                if (q.imageUrl) { fbImg.src = q.imageUrl; fbImg.style.display = 'block'; } else { fbImg.style.display = 'none'; }
+                
+                retryWarning.innerText = msg; retryWarning.style.display = 'block';
+                feedbackCard.classList.add('show');
+            }
+
+            window.nextQuestion = function() {
+                currentIndex++;
+                if (hitsRemaining > 0 && currentIndex < workingQueue.length) { loadQuestion(); } 
+                else {
+                    playTone('win'); stopBGM(); stopFeverVFX(); triggerWinVFX(); document.body.classList.remove('fever-mode');
+                    setTimeout(() => {
+                        quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                        generateGallery(); endScreen.classList.remove('hidden');
+                    }, 400);
+                }
+            };
+
+            function generateGallery() {
+                wrongGallery.innerHTML = ''; const subtitle = document.getElementById('gallery-subtitle');
+                if (wrongHistory.size === 0) {
+                    subtitle.innerHTML = "<span style='color: var(--correct-color); font-weight: bold;'>🌟 完美战绩！整个忍者道场被你满血打穿，无任何遗忘碎片！</span>";
+                    return;
+                }
+                subtitle.innerHTML = `以下是你刚刚在暗器下遗忘的 <b style="color:var(--primary-color)">${wrongHistory.size}</b> 块灰暗碎片。点击图片翻转复盘。`;
+                
+                wrongHistory.forEach(id => {
+                    const q = originalQuizData.find(item => item.id === id);
+                    if (!q) return;
+                    const card = document.createElement('div'); card.className = 'gallery-item';
+                    
+                    const bgStyle = q.imageUrl ? `background-image: url('${q.imageUrl}')` : `background-color: #523838;`;
+                    card.innerHTML = `
+                        <div class="gallery-inner">
+                            <div class="gallery-front" style="${bgStyle}"></div>
+                            <div class="gallery-back">
+                                <div class="gallery-back-title">${q.question.replace(/<[^>]+>/g, '').substring(3, 25)}...</div>
+                                <div class="gallery-back-desc">${q.metaphor.replace(/<[^>]+>/g, '')}</div>
+                            </div>
+                        </div>
+                    `;
+                    card.onclick = function() { this.classList.toggle('flipped'); };
+                    wrongGallery.appendChild(card);
+                });
+            }
+        } catch (error) { alert("道场完全体核心引擎挂载异常: " + error.message); }
+    </script>
+</body>
+</html>
