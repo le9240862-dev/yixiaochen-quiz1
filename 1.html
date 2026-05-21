@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微物之光 ✨ 医学微生物视觉真题全能舱</title>
+    <style>
+        /* ==========================================================================
+           1. 小红书元气马卡龙色彩系统 & 治愈系少女风
+           ========================================================================== */
+        :root {
+            /* 全局背景：多巴胺元气奶白与微糖粉渐变 */
+            --bg-main: #fcf8f6;
+            --bg-gradient: linear-gradient(135deg, #fff5f5 0%, #f7f1fb 50%, #eef5fc 100%);
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            
+            /* 文字颜色 */
+            --text-title: #3e3843;     /* 深可可色，比死黑更温柔 */
+            --text-body: #695e72;      /* 熟栗色 */
+            --text-muted: #a698b0;     /* 芋泥灰 */
+            
+            /* 马卡龙核心视觉色 */
+            --color-g-pos: #9c7eff;    /* G+ : 梦幻薰衣草紫 */
+            --color-g-neg: #ff7597;    /* G- : 蜜桃初恋粉 */
+            --color-acid: #ff4d6d;     /* 抗酸 : 树莓软糖红 */
+            
+            /* 少女感奶油色系（章节专属皮肤） */
+            --theme-pink: #ffaebc;
+            --theme-purple: #ecc5fb;
+            --theme-blue: #a0e7e5;
+            --theme-green: #b9fbc0;
+            --theme-orange: #ffcfb3;
+            --theme-yellow: #fbeeac;
+            
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --shadow-soft: 0 10px 30px rgba(223, 205, 235, 0.3);
+            --shadow-hover: 0 15px 35px rgba(190, 160, 210, 0.45);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: var(--bg-main);
+            background: var(--bg-gradient);
+            color: var(--text-body);
+            min-height: 100vh;
+            padding: 30px;
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* 隐藏滚动条但保留滚动功能 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e2d7ec;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d0bfdf;
+        }
+
+        /* ==========================================================================
+           2. 顶栏：梦幻多巴胺交互仪表盘
+           ========================================================================== */
+        .app-header {
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 装饰用的小泡泡 */
+        .app-header::before {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(255,174,188,0.2) 0%, transparent 70%);
+            top: -40px;
+            left: -20px;
+            border-radius: 50%;
+        }
+
+        .brand-zone .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #fff0f3 0%, #ffe3e8 100%);
+            border: 1px solid #ffaebc;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            color: #ff4d6d;
+            font-weight: 600;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 10px rgba(255,174,188,0.2);
+        }
+
+        .brand-zone h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-title);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-zone h1 span {
+            background: linear-gradient(135deg, #ff65a3 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-zone p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* 甜美风关卡进度条 */
+        .status-panel {
+            background: linear-gradient(135deg, #ffffff 0%, #fbf9fe 100%);
+            border: 2px dashed #e8daf5;
+            border-radius: var(--radius-md);
+            padding: 16px 24px;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .status-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #7b6291;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .status-title em {
+            font-style: normal;
+            color: #ff7597;
+        }
+
+        .cute-progress {
+            width: 100%;
+            height: 14px;
+            background: #eedffd;
+            border-radius: 30px;
+            padding: 2px;
+            box-shadow: inset 0 2px 4px rgba(168,85,247,0.1);
+        }
+
+        .cute-progress-bar {
+            height: 100%;
+            width: 100%; /* 全通关状态 */
+            background: linear-gradient(90deg, #ff7597 0%, #b388ff 100%);
+            border-radius: 30px;
+            position: relative;
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0% { opacity: 0.9; box-shadow: 0 0 4px #ff7597; }
+            50% { opacity: 1; box-shadow: 0 0 12px #b388ff, 0 0 4px #ff7597; }
+            100% { opacity: 0.9; box-shadow: 0 0 4px #ff7597; }
+        }
+
+        .status-tips {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: right;
+            font-weight: 500;
+        }
+
+        /* ==========================================================================
+           3. 核心大改：横向多列/多仓室视窗布局 (不再是一滑到底)
+           ========================================================================== */
+        .main-workspace {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 核心大改：横向三列并排 */
+            gap: 24px;
+            align-items: start;
+            flex: 1;
+        }
+
+        @media (max-width: 1200px) {
+            .main-workspace {
+                grid-template-columns: repeat(2, 1fr); /* 中等屏幕两列 */
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-workspace {
+                grid-template-columns: 1fr; /* 手机端自动回弹一列 */
+            }
+            body { padding: 12px; }
+            .app-header { flex-direction: column; gap: 16px; text-align: center; padding: 20px; }
+            .cute-progress { width: 100%; }
+        }
+
+        /* ==========================================================================
+           4. 治愈系手帐盒风格：章节容器
+           ========================================================================== */
+        .chapter-box {
+            background: var(--panel-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 2px solid #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-soft);
+            border-top: 8px solid var(--ch-color, #ffaebc); /* 顶端色彩丝带 */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chapter-box:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* 赋予不同章节专属的多巴胺马卡龙皮肤 */
+        .ch-9 { --ch-color: var(--theme-pink); --ch-light: #fff0f3; --ch-text: #ff4d6d; }
+        .ch-10 { --ch-color: var(--theme-purple); --ch-light: #f7f0fd; --ch-text: #9c7eff; }
+        .ch-11 { --ch-color: var(--theme-blue); --ch-light: #f0fbfc; --ch-text: #05a8aa; }
+        .ch-12 { --ch-color: var(--theme-green); --ch-light: #f2fdf4; --ch-text: #2a9d8f; }
+        .ch-13 { --ch-color: var(--theme-orange); --ch-light: #fff6f0; --ch-text: #e76f51; }
+        .ch-14 { --ch-color: #ff9aa2; --ch-light: #ffeef0; --ch-text: #d90429; }
+        .ch-16 { --ch-color: var(--theme-yellow); --ch-light: #fffdeb; --ch-text: #b58d00; }
+
+        .chapter-title-card {
+            background: var(--ch-light);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255,255,255,0.6);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .chapter-title-card::after {
+            content: '📖';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            opacity: 0.7;
+        }
+
+        .ch-title-zh {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-title);
+        }
+
+        .ch-title-en {
+            font-size: 0.75rem;
+            color: var(--ch-text);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+
+        /* 章节内部的卡片纵向排布，整体更轻盈紧凑 */
+        .cards-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* ==========================================================================
+           5. 拍立得趣味盲盒卡片 (女生最爱、小红书高赞排版)
+           ========================================================================== */
+        .bacter-card {
+            background: #ffffff;
+            border: 2px solid #f3edf8;
+            border-radius: var(--radius-md);
+            padding: 12px;
+            display: block;
+            text-decoration: none;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(230, 220, 240, 0.2);
+        }
+
+        /* 拍立得相框式图片区 */
+        .polaroid-frame {
+            width: 100%;
+            height: 160px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            position: relative;
+            background: #faf7fd;
+            border: 1px solid #efe7f4;
+        }
+
+        .polaroid-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        /* 闪烁的软萌发光霓虹属性灯 (绝不重叠文字) */
+        .glow-neon-dot {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            z-index: 2;
+        }
+        .dot-gpos { background: var(--color-g-pos); box-shadow: 0 0 12px var(--color-g-pos); }
+        .dot-gneg { background: var(--color-g-neg); box-shadow: 0 0 12px var(--color-g-neg); }
+        .dot-acid { background: var(--color-acid); box-shadow: 0 0 12px var(--color-acid); }
+
+        /* 卡片内容区域 */
+        .card-detail-block {
+            padding: 10px 4px 2px 4px;
+        }
+
+        /* 小标签组 */
+        .meta-tag-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .type-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+        .type-badge.badge-gpos { background: #efeaff; color: #7c4dff; }
+        .type-badge.badge-gneg { background: #fff0f4; color: #ff4081; }
+        .type-badge.badge-acid { background: #ffebee; color: #ff1744; }
+
+        .origin-source {
+            font-size: 0.7rem;
+            color: #9c88a6;
+            background: #f7f3fb;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        /* 有趣的童话/剧场感前缀 */
+        .fairy-prefix {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-title);
+            margin-bottom: 2px;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 真实细菌学名 */
+        .scientific-title {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        /* 底部联动提示线 */
+        .card-interaction-bar {
+            border-top: 1px dashed #efe6f5;
+            padding-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+        }
+
+        .video-status-tip {
+            color: #9b87a8;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+
+        .go-quiz-btn {
+            color: var(--ch-text);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            transition: transform 0.2s;
+        }
+
+        /* ==========================================================================
+           6. 少女心交互马力全开：拟真震动反馈与萌系悬浮效果
+           ========================================================================== */
+        .bacter-card:hover {
+            transform: scale(1.02) rotate(-1deg); /* 像拍立得照片一样微微倾斜，非常适合小红书审美 */
+            border-color: var(--ch-color);
+            box-shadow: 0 12px 24px rgba(180, 140, 210, 0.25);
+            background: #fffdfd;
+        }
+
+        .bacter-card:hover .polaroid-frame img {
+            transform: scale(1.06);
+        }
+
+        /* 模拟手机马达震动的CSS动画，增强点击欲望 */
+        .bacter-card:active {
+            animation: mini-vibrate 0.15s linear infinite;
+        }
+
+        @keyframes mini-vibrate {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            20% { transform: translate(-1px, -1px) rotate(-0.5deg); }
+            40% { transform: translate(-1px, 1px) rotate(0.5deg); }
+            60% { transform: translate(1px, -1px) rotate(0deg); }
+            80% { transform: translate(-1px, 1px) rotate(-0.5deg); }
+            100% { transform: translate(1px, 1px) rotate(0.5deg); }
+        }
+
+        .bacter-card:hover .go-quiz-btn {
+            transform: translateX(3px);
+        }
+
+        /* 底部版权 */
+        .footer-info {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="brand-zone">
+            <div class="brand-badge">✨ 医小晨的微光 </div>
+            <h1><span>医学微生物</span> 视觉趣动刷题本</h1>
+            <p>心流交互体验վ'ᴗ' ի · 期末高频考题精选</p>
+        </div>
+        
+        <div class="status-panel">
+            <div class="status-title">
+                <span>🌸 核心必考菌种手账收集进度</span>
+                <span>已成功通关解锁: <em>18 / 18</em></span>
+            </div>
+            <div class="cute-progress">
+                <div class="cute-progress-bar"></div>
+            </div>
+            <div class="status-tips">🍬 配套细菌考点记忆视频</div>
+        </div>
+    </header>
+
+    <main class="main-workspace">
+
+        <section class="chapter-box ch-9">
+            <div class="chapter-title-card">
+                <h2 class="ch-title-zh">第九章 病原性球菌</h2>
+                <span class="ch-title-en">Chapter 09 · Cocci</span>
+            </div>
+            <div class="cards-list">
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gpos"></div>
+                        <img src="https://img.cdn1.vip/i/6a0861e278e3f_1778934242.webp" alt="金黄色葡萄球菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gpos">G+</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">👑 紫金法老神庙晚宴</span>
+                        <span class="scientific-title">金黄色葡萄球菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz2.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gpos"></div>
+                        <img src="https://img.cdn1.vip/i/6a0928509540f_1778985040.webp" alt="A群链球菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gpos">G+</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🔮 链球王猩红暗殿</span>
+                        <span class="scientific-title">A群链球菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz3-fylqj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gpos"></div>
+                        <img src="https://img.cdn1.vip/i/6a0c279bf362e_1779181467.webp" alt="肺炎链球菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gpos">G+</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🏰 大叶堡攻城战</span>
+                        <span class="scientific-title">肺炎链球菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz4-nmynsj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gneg"></div>
+                        <img src="https://img.cdn1.vip/i/6a0ee8cb5a4b7_1779361995.webp" alt="脑膜炎奈瑟菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gneg">G-</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🥶 寒冬血色酒馆</span>
+                        <span class="scientific-title">脑膜炎奈瑟菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz5-lbnsj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gneg"></div>
+                        <img src="https://img.cdn1.vip/i/6a0afc5b20dba_1779104859.webp" alt="淋病奈瑟菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gneg">G-</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🥀 粉红玫瑰庄园</span>
+                        <span class="scientific-title">淋病奈瑟菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="chapter-box ch-10">
+            <div class="chapter-title-card">
+                <h2 class="ch-title-zh">第十章 肠杆菌科</h2>
+                <span class="ch-title-en">Chapter 10 · Enterobacteriaceae</span>
+            </div>
+            <div class="cards-list">
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz6-dcaxj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gneg"></div>
+                        <img src="https://img.cdn1.vip/i/6a0d3c9423091_1779252372.webp" alt="大肠埃希菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gneg">G-</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🍔 霓虹快餐店</span>
+                        <span class="scientific-title">大肠埃希菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz7-zhj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gneg"></div>
+                        <img src="https://img.cdn1.vip/i/6a0d704eb3843_1779265614.webp" alt="志贺菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gneg">G-</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🏯 僵尸忍者道场</span>
+                        <span class="scientific-title">志贺菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz8-smj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gneg"></div>
+                        <img src="https://img.cdn1.vip/i/6a0d543eb75dd_1779258430.webp" alt="沙门菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gneg">G-</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🏜️ 荒漠黑市与血色斗兽场</span>
+                        <span class="scientific-title">沙门菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <section class="chapter-box ch-11">
+                <div class="chapter-title-card">
+                    <h2 class="ch-title-zh">第十一章 弧菌属</h2>
+                    <span class="ch-title-en">Chapter 11 · Vibrio</span>
+                </div>
+                <div class="cards-list">
+                    <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz9-hlhj.html" class="bacter-card">
+                        <div class="polaroid-frame">
+                            <div class="glow-neon-dot dot-gneg"></div>
+                            <img src="https://img.cdn1.vip/i/6a0d9c5f2eadc_1779276895.webp" alt="霍乱弧菌">
+                        </div>
+                        <div class="card-detail-block">
+                            <div class="meta-tag-row">
+                                <span class="type-badge badge-gneg">G-</span>
+                                <span class="origin-source">🏛️ 真题</span>
+                            </div>
+                            <span class="fairy-prefix">⚓ 米汤潜艇基地</span>
+                            <span class="scientific-title">霍乱弧菌</span>
+                            <div class="card-interaction-bar">
+                                <span class="video-status-tip">📺 已就绪</span>
+                                <span class="go-quiz-btn">测真题 ➔</span>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz10-frxxhj.html" class="bacter-card">
+                        <div class="polaroid-frame">
+                            <div class="glow-neon-dot dot-gneg"></div>
+                            <img src="https://img.cdn1.vip/i/6a0da8094c271_1779279881.webp" alt="副溶血性弧菌">
+                        </div>
+                        <div class="card-detail-block">
+                            <div class="meta-tag-row">
+                                <span class="type-badge badge-gneg">G-</span>
+                                <span class="origin-source">🏛️ 真题</span>
+                            </div>
+                            <span class="fairy-prefix">🏖️ 咸海滩烧烤架</span>
+                            <span class="scientific-title">副溶血性弧菌</span>
+                            <div class="card-interaction-bar">
+                                <span class="video-status-tip">📺 已就绪</span>
+                                <span class="go-quiz-btn">测真题 ➔</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <section class="chapter-box ch-12">
+                <div class="chapter-title-card">
+                    <h2 class="ch-title-zh">第十二章 螺杆菌属</h2>
+                    <span class="ch-title-en">Chapter 12 · Helicobacter</span>
+                </div>
+                <div class="cards-list">
+                    <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz11-ymlgj.html" class="bacter-card">
+                        <div class="polaroid-frame">
+                            <div class="glow-neon-dot dot-gneg"></div>
+                            <img src="https://img.cdn1.vip/i/6a0daedb03dd7_1779281627.webp" alt="幽门螺杆菌">
+                        </div>
+                        <div class="card-detail-block">
+                            <div class="meta-tag-row">
+                                <span class="type-badge badge-gneg">G-</span>
+                                <span class="origin-source">🏛️ 真题</span>
+                            </div>
+                            <span class="fairy-prefix">🚁 胃酸峡谷空袭战</span>
+                            <span class="scientific-title">幽门螺杆菌</span>
+                            <div class="card-interaction-bar">
+                                <span class="video-status-tip">📺 已就绪</span>
+                                <span class="go-quiz-btn">测真题 ➔</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </section>
+        </div>
+
+        <section class="chapter-box ch-13">
+            <div class="chapter-title-card">
+                <h2 class="ch-title-zh">第十三章 厌氧性梭菌属</h2>
+                <span class="ch-title-en">Chapter 13 · Clostridium</span>
+            </div>
+            <div class="cards-list">
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz12-psfsj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gpos"></div>
+                        <img src="https://img.cdn1.vip/i/6a0db972efffd_1779284338.webp" alt="破伤风梭菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gpos">G+</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🎪 幽灵荒野的生锈马戏团</span>
+                        <span class="scientific-title">破伤风梭菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz13-cqjmsj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gpos"></div>
+                        <img src="https://img.cdn1.vip/i/6a0dc73058ae7_1779287856.webp" alt="产气荚膜梭菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gpos">G+</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🏭 高压充气工厂</span>
+                        <span class="scientific-title">产气荚膜梭菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz14-rdsj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gpos"></div>
+                        <img src="https://img.cdn1.vip/i/6a0dd18621ec2_1779290502.webp" alt="肉毒梭菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gpos">G+</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🎾 深紫幽网球公开赛</span>
+                        <span class="scientific-title">肉毒梭菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="chapter-box ch-14">
+            <div class="chapter-title-card">
+                <h2 class="ch-title-zh">第十四章 分枝杆菌属</h2>
+                <span class="ch-title-en">Chapter 14 · Mycobacterium</span>
+            </div>
+            <div class="cards-list">
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz15-jhfzgj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-acid"></div>
+                        <img src="https://img.cdn1.vip/i/6a0eae2817899_1779346984.webp" alt="结核分枝杆菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-acid">Acid-Fast</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🏛️ 赤色档案馆</span>
+                        <span class="scientific-title">结核分枝杆菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="chapter-box ch-16">
+            <div class="chapter-title-card">
+                <h2 class="ch-title-zh">第十六章 动物源性细菌</h2>
+                <span class="ch-title-en">Chapter 16 · Zoonotic</span>
+            </div>
+            <div class="cards-list">
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz16-blsj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gneg"></div>
+                        <img src="https://img.cdn1.vip/i/6a0dd90ced346_1779292428.webp" alt="布鲁菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gneg">G-</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🌅 粉红落日的波浪农场</span>
+                        <span class="scientific-title">布鲁菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz17-syyesj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gneg"></div>
+                        <img src="https://img.cdn1.vip/i/6a0e8009882fc_1779335177.webp" alt="耶尔森菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gneg">G-</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🍽️ 黑曜石地宫</span>
+                        <span class="scientific-title">耶尔森菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://le9240862-dev.github.io/yixiaochen-quiz1/quiz18-tjybgj.html" class="bacter-card">
+                    <div class="polaroid-frame">
+                        <div class="glow-neon-dot dot-gpos"></div>
+                        <img src="https://img.cdn1.vip/i/6a0e85ab9dd22_1779336619.webp" alt="炭疽芽孢杆菌">
+                    </div>
+                    <div class="card-detail-block">
+                        <div class="meta-tag-row">
+                            <span class="type-badge badge-gpos">G+</span>
+                            <span class="origin-source">🏛️ 期末真题精选</span>
+                        </div>
+                        <span class="fairy-prefix">🎋 紫竹攻坚堡垒</span>
+                        <span class="scientific-title">炭疽芽孢杆菌</span>
+                        <div class="card-interaction-bar">
+                            <span class="video-status-tip">📺 视频对应图解已配齐</span>
+                            <span class="go-quiz-btn">测真题 ➔</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer-info">
+        ✨ 专为医学生打造的视觉联想刷题舱 · 期末必过鸭 ✨
+    </footer>
+
+</body>
+</html>
