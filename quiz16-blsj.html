@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医小晨 - 布鲁氏菌属 沉浸心流版</title>
+    <style>
+        :root {
+            /* 布鲁氏菌属的粉红落日与波浪农场调 */
+            --primary-color: #ec407a; /* 代表粉红天空与G-粉色菌体的浪漫粉 */
+            --primary-light: #fce4ec;
+            --primary-dark: #c2185b;
+            --bg-color: #fff3e0; /* 农场泥土与温暖落日微光背景 */
+            --card-bg: #ffffff;
+            --correct-color: #43a047;
+            --wrong-color: #e53935;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-lg: 0 15px 35px rgba(236, 64, 122, 0.15);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s;
+            overflow-x: hidden;
+        }
+
+        /* 狂暴模式与氛围特效 */
+        body.fever-mode {
+            background-color: #260c16;
+            animation: feverPulse 2s infinite alternate;
+        }
+        @keyframes feverPulse {
+            0% { box-shadow: inset 0 0 50px rgba(236, 64, 122, 0.3); }
+            100% { box-shadow: inset 0 0 150px rgba(236, 64, 122, 0.7); }
+        }
+
+        #vfx-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute; background: rgba(244, 143, 177, 0.8);
+            border-radius: 50%; animation: floatUp linear forwards;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        .app-container {
+            max-width: 600px; width: 100%; background-color: var(--card-bg);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+            overflow: hidden; position: relative; z-index: 10;
+        }
+
+        /* 物理震动反馈 */
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* Boss 血条与 Combo UI */
+        .rpg-header {
+            background-color: #211018; padding: 15px 20px; display: none;
+            flex-direction: column; gap: 8px; border-bottom: 3px solid #000;
+        }
+        .boss-info { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 14px; }
+        .hp-bar-bg { width: 100%; height: 14px; background-color: #3d1c2a; border-radius: 7px; overflow: hidden; border: 1px solid #000; }
+        .hp-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #f48fb1, #ec407a); width: 100%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(236, 64, 122, 0.8);
+        }
+        .combo-text {
+            color: #ffeb3b; font-style: italic; font-size: 14px; font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s;
+        }
+        .combo-text.show { opacity: 1; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .content-padding { padding: 30px; }
+        .section-title { color: var(--primary-dark); font-size: 22px; margin-bottom: 20px; text-align: center; font-weight: 800; }
+        
+        /* 视频跳转引导卡片 */
+        .video-banner {
+            background: linear-gradient(135deg, #fce4ec, #f8bbd0);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+        .video-banner:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(236, 64, 122, 0.25);
+        }
+        .video-banner-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .video-title {
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-size: 15px;
+        }
+        .video-desc {
+            font-size: 13px;
+            color: #555;
+        }
+        .video-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(236, 64, 122, 0.3);
+            transition: background 0.2s;
+        }
+        .video-banner:hover .video-btn {
+            background: var(--primary-dark);
+        }
+
+        .panorama-img { width: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: 20px; display: block; min-height: 180px; background-color: var(--primary-light); object-fit: cover; }
+
+        /* 结构化介绍区块 */
+        .feature-block {
+            text-align: left; background: #fff; padding: 15px; border-radius: 10px;
+            margin-bottom: 15px; border: 1px solid #eee;
+        }
+        .feature-title { font-weight: bold; color: var(--primary-dark); margin-bottom: 5px; font-size: 15px; }
+        .feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dashed #eee; }
+        .timer-badge { background-color: var(--primary-light); color: var(--primary-dark); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; }
+        .timer-badge.danger { background-color: #fde8e8; color: var(--wrong-color); animation: pulse 1s infinite; }
+        
+        /* 题干与选项样式 */
+        .question-text { font-size: 18px; font-weight: 500; margin-bottom: 25px; line-height: 1.6; color: #34495e; }
+        .q-hl { 
+            font-weight: 800; color: #000; 
+            background: linear-gradient(120deg, rgba(236, 64, 122, 0.2) 0%, rgba(236, 64, 122, 0.2) 100%);
+            background-repeat: no-repeat; background-size: 100% 40%; background-position: 0 88%;
+            padding: 0 2px;
+        }
+
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background-color: #fff; border: 2px solid #eaeded; border-radius: var(--radius-md); padding: 16px 20px; font-size: 16px; color: var(--text-main); text-align: left; cursor: pointer; transition: all 0.2s ease; font-weight: 500;}
+        .option-btn:hover:not(:disabled) { border-color: var(--primary-color); background-color: var(--primary-light); transform: translateY(-2px); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; transform: none; }
+        .option-btn.correct { background-color: #e8f5e9; border-color: var(--correct-color); color: #1b5e20; font-weight: bold; }
+        .option-btn.wrong { background-color: #ffebee; border-color: var(--wrong-color); color: #b71c1c; }
+
+        /* 刮刮乐线索 */
+        .hint-btn {
+            background: none; border: 1px dashed var(--primary-color); color: var(--primary-color);
+            padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; 
+            width: 100%; margin-top: 15px; transition: 0.2s; display: none;
+        }
+        .hint-btn:hover { background: var(--primary-light); }
+        .hint-img-container { display: none; margin-top: 15px; position: relative; border-radius: 8px; overflow: hidden; }
+        .hint-img { width: 100%; filter: blur(15px); transition: filter 0.3s; }
+        .hint-img.revealed { filter: blur(0); }
+        .hint-overlay-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 20px; pointer-events: none; }
+
+        /* 解析区 */
+        .feedback-card { display: none; margin-top: 25px; background-color: var(--card-bg); border: 2px solid var(--primary-light); padding: 20px; border-radius: var(--radius-md); position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.03); animation: slideUpFade 0.5s forwards; }
+        .feedback-card::before { content: ''; position: absolute; left: -2px; top: -2px; bottom: -2px; width: 6px; background-color: var(--primary-color); border-radius: 10px 0 0 10px; }
+        .feedback-card.show { display: block; }
+        .feedback-img { width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; }
+        
+        .highlight { color: var(--primary-color); font-weight: bold; background: var(--primary-light); padding: 2px 6px; border-radius: 4px; margin: 0 2px; }
+        .fact-text { font-size: 15px; color: #455a64; margin-bottom: 12px; line-height: 1.7; background-color: #f5f7fa; padding: 12px 15px; border-radius: 8px; }
+        .metaphor-text { font-size: 15px; color: #333; line-height: 1.7; padding: 0 5px; }
+        
+        .retry-warning { display: none; margin-top: 15px; padding: 10px; border-radius: 8px; background-color: #fff3e0; color: #e65100; font-size: 14px; font-weight: bold; text-align: center; }
+
+        /* 复盘画廊 */
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
+        .gallery-item { perspective: 1000px; cursor: pointer; height: 160px; }
+        .gallery-inner { width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; border-radius: 12px; box-shadow: var(--shadow-sm); }
+        .gallery-item:hover .gallery-inner { box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .gallery-item.flipped .gallery-inner { transform: rotateY(180deg); }
+        
+        .gallery-front, .gallery-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 12px; overflow: hidden; }
+        .gallery-front { background-size: cover; background-position: center; filter: grayscale(100%) brightness(0.7); transition: filter 0.3s; display: flex; align-items: center; justify-content: center; }
+        .gallery-front::after { content: '点击翻转 🔄'; color: white; background: rgba(236, 64, 122, 0.85); padding: 8px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .gallery-item.flipped .gallery-front { filter: grayscale(0%) brightness(1); } 
+        
+        .gallery-back { background-color: var(--primary-light); transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 2px solid var(--primary-color); }
+        .gallery-back-title { font-size: 13px; font-weight: bold; color: var(--primary-dark); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .gallery-back-desc { font-size: 12px; color: var(--text-main); line-height: 1.5; }
+
+        .primary-btn { width: 100%; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(236, 64, 122, 0.3); margin-top: 15px; }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(236, 64, 122, 0.4); }
+        
+        .secondary-btn { background: #f1f3f5; color: #555; box-shadow: none; margin-top: 10px; font-size: 15px; padding: 14px;}
+        .secondary-btn:hover { background: #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transform: translateY(-1px); }
+
+        .hidden { display: none !important; }
+
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="vfx-layer"></div>
+
+    <div class="app-container" id="main-container">
+        <div class="rpg-header" id="rpg-header">
+            <div class="boss-info">
+                <span>🌾 布鲁氏菌·波浪大领主</span>
+                <span class="combo-text" id="combo-text">Combo x3! 🔥</span>
+                <span>剩余HP: <span id="hp-text">12</span></span>
+            </div>
+            <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-bar"></div></div>
+        </div>
+
+        <div id="intro-screen" class="content-padding">
+            <h1 class="section-title">🌅 粉红落日的波浪农场：布鲁氏菌属</h1>
+
+            <a href="http://xhslink.com/o/1pzvJnaGhZo" class="video-banner" target="_blank">
+                <div class="video-banner-content">
+                    <span class="video-title">▶️ 先看 3 分钟【布鲁氏菌记忆宫殿电影】</span>
+                    <span class="video-desc">粉红天空、巨型波浪、流产的摇篮……看完带入剧情刷题巨爽！</span>
+                </div>
+                <span class="video-btn">去小红书观看 ↗</span>
+            </a>
+
+            <img class="panorama-img" id="intro-panorama" src="https://img.cdn1.vip/i/6a0dd90ced346_1779292428.webp" alt="布鲁氏菌全景图">
+
+            <div class="feature-block">
+                <div class="feature-title">📚 抱佛脚整理的小尝试笔记 ૧(●´৺`●)酋</div>
+                <div class="feature-desc">这部分是我复习时结合期末常考题、高频考点自己摸索揪出来的小总结。算是一次好玩的视觉尝试，希望能陪大家轻松搞定这章的重难点，不走弯路呀～</div>
+            </div>
+            <div class="feature-block">
+                <div class="feature-title">⚡️ 沉浸式视觉锚定反馈</div>
+                <div class="feature-desc">每道题都与“波浪农场”宏大场景精确匹配。答错不怕，怪物移至队尾，直到你彻底把干瘪的文字刻进视觉记忆。</div>
+            </div>
+
+            <button class="primary-btn" onclick="startQuiz()" style="margin-top: 10px;">进入波浪农场 ⚔️</button>
+        </div>
+
+        <div id="quiz-screen" class="content-padding hidden">
+            <div class="header-info">
+                <span style="font-weight: bold; color: var(--primary-color);">🎯 布氏菌核心扫荡</span>
+                <div class="timer-badge" id="timer-badge">⏳ <span id="time-left">15</span>s</div>
+            </div>
+
+            <div class="question-text" id="question-text">题目加载中...</div>
+            <div class="options-container" id="options-container"></div>
+            
+            <button class="hint-btn" id="hint-btn" onclick="useHint()">🔍 消耗 1 Combo 刮开视觉线索</button>
+            <div class="hint-img-container" id="hint-container">
+                <img class="hint-img" id="hint-img" src="">
+                <div class="hint-overlay-text" id="hint-overlay">已刮开 (3秒后变暗)</div>
+            </div>
+
+            <div class="feedback-card" id="feedback-card">
+                <img id="feedback-img" class="feedback-img" src="">
+                <div class="fact-text" id="fact-text"></div>
+                <div class="metaphor-text" id="metaphor-text"></div>
+                <div class="retry-warning" id="retry-warning"></div>
+                <button class="primary-btn" id="next-btn" onclick="nextQuestion()">继续追击 ➡️</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="content-padding hidden">
+            <h1 class="section-title">🎉 成功掌控布鲁氏菌属！</h1>
+            <p class="section-subtitle" id="gallery-subtitle" style="margin-bottom: 15px;">以下是你刚刚遗忘的灰暗碎片。点击图片，重新点亮视觉锚点并翻转复盘。</p>
+            
+            <div class="gallery-grid" id="wrong-gallery"></div>
+
+            <button class="primary-btn" onclick="goToNext()">🗺️ 开启下一战役</button>
+            <button class="primary-btn secondary-btn" onclick="restartQuiz()">🔄 重置当前关卡</button>
+
+            <p style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 20px;">
+                粉红落日的波浪农场已安全。随时可以通过错题画廊进行视觉复盘。
+            </p>
+        </div>
+    </div>
+
+    <script>
+        try {
+            const CustomMedia = {
+                introImage: "https://img.cdn1.vip/i/6a0dd90ced346_1779292428.webp", 
+                bgm: "",        
+                correct: "",    
+                wrong: "",      
+                fever: "",      
+                win: ""         
+            };
+
+            // 👁️ 布鲁氏菌属·12道核心题库图文全替换版
+            const originalQuizData = [
+                {
+                    id: 0,
+                    question: "1. 能引起<span class='q-hl'>人畜共患病</span>且在体内主要<span class='q-hl'>寄生在巨噬细胞内</span>的细菌是：",
+                    options: ["A. 梅毒螺旋体", "B. 霍乱弧菌", "C. 布氏杆菌", "D. 淋球菌", "E. 白喉杆菌"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：布鲁氏菌属（布氏杆菌）是典型的<span class='highlight'>动物源性细菌</span>，可引起人畜共患病，且属于典型的<span class='highlight'>胞内寄生菌</span>（寄生于巨噬细胞）。",
+                    metaphor: "🛡️ 视觉锚定：视线锁定右侧防线【C区】。那个坚固的**透明大细胞球**里，农场保卫兵正和敌人在内部搏斗。这说明它主要寄生在<span class='highlight'>巨噬细胞内</span>，属于典型的胞内寄生，机体主要靠细胞免疫。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dd9144d4be_1779292436.webp" 
+                },
+                {
+                    id: 1,
+                    question: "2. 在我国流行<span class='q-hl'>占绝对优势</span>的布鲁菌病的病原体是：",
+                    options: ["A. 羊布氏杆菌", "B. 牛布氏杆菌", "C. 猪布氏杆菌", "D. 犬布氏杆菌", "E. 鼠布氏杆菌"],
+                    correctAnswer: 0, 
+                    fact: "🎯 核心事实：我国流行的布鲁氏菌病中，以<span class='highlight'>羊布鲁氏菌（羊布氏杆菌）</span>最为多见。",
+                    metaphor: "🐑 视觉锚定：看看农场中央【A区】的核心。虽然有一座巨大的领奖台，但农场中央圈养数量最多、最显眼的动物就是**绵羊**。它们成群结队，完美映射我国<span class='highlight'>以羊布氏菌为主</span>的流行特色。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dd912ce0b1_1779292434.webp"
+                },
+                {
+                    id: 2,
+                    question: "3. 布氏杆菌感染人体后，使患者的<span class='q-hl'>热型呈波浪式</span>（波浪热）是由于：",
+                    options: ["A. 内毒素的释放", "B. 外毒素的反复释放", "C. 反复形成菌血症", "D. 细菌的潜伏感染", "E. 细菌被巨噬细胞吞噬"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：布鲁氏菌在胞内繁殖，<span class='highlight'>反复破胞入血形成菌血症</span>，导致其临床典型发热症状为<span class='highlight'>波浪热</span>。",
+                    metaphor: "🌊 视觉锚定：望向农场背后的【天空与海洋】。天空中画着巨大的、极具规律起伏的**粉红色巨浪体温曲线**。细菌每次从细胞里跑出来进血，海面就翻起一阵巨浪，形成最具标志性的<span class='highlight'>波浪热</span>！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dd91378b43_1779292435.webp"
+                },
+                {
+                    id: 3,
+                    question: "4. 布氏杆菌的<span class='q-hl'>形态与染色特性</span>描述正确的是：",
+                    options: ["A. 革兰阳性大杆菌", "B. 革兰阴性短小杆菌", "C. 革兰阳性球菌", "D. 革兰阴性有芽胞杆菌", "E. 抗酸染色阳性菌"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：布鲁氏菌在微观下呈现为细小的<span class='highlight'>革兰阴性(G-)短小杆菌</span>。",
+                    metaphor: "🪵 视觉锚定：盯着农场中央的木栅栏。组成围栏的是一根根**粗短的粉红色圆木桩**。粉红色在记忆宫殿中等同于<span class='highlight'>革兰阴性(G-)</span>，粗短的木桩就是<span class='highlight'>短小杆菌</span>的完美化身。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dd913f3b3f_1779292435.webp" 
+                },
+                {
+                    id: 4,
+                    question: "5. 关于布鲁氏菌的<span class='q-hl'>培养特性</span>，下列哪项是正确的？",
+                    options: ["A. 营养要求不高", "B. 初次分离培养需 5%~10% 的 CO2", "C. 最适生长温度 20~25℃", "D. 兼性厌氧，生长迅速", "E. 普通琼脂平板上可见溶血环"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：布氏杆菌营养要求高，<span class='highlight'>初次分离培养时必须供给 5%~10% 的 CO2</span> 环境，且生长缓慢。",
+                    metaphor: "🍾 视觉锚定：看向左侧生化【B区】的桌子上。服务员手里正拿着一瓶**剧烈喷发的苏打水**，上面清晰地印着标签：<span class='highlight'>“10% CO2强力气泡”</span>。初次分离就像这瓶苏打水一样，必须在有二氧化碳的严苛环境下才能很好地生长。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dd91488454_1779292436.webp" 
+                },
+                {
+                    id: 5,
+                    question: "6. 感染动物后能引起<span class='q-hl'>母畜流产</span>的动物源性病原体是：",
+                    options: ["A. 炭疽杆菌", "B. 鼠疫杆菌", "C. 痢疾杆菌", "D. 布氏杆菌", "E. 白喉杆菌"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：布鲁氏菌具有极强的组织趋向性，主要导致感染的<span class='highlight'>母畜发生流产</span>。",
+                    metaphor: "🍼 视觉锚定：视线移向木栅栏下方。那里有一个**被打翻的粉红色婴儿摇篮**，里面的奶瓶和铺盖洒了一地。这个翻倒的摇篮对应母畜感染后特有的致病特征——<span class='highlight'>母畜流产</span>。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dd915807d3_1779292437.webp" 
+                },
+                {
+                    id: 6,
+                    question: "7. 下列哪种方法或依据可用于<span class='q-hl'>鉴别和区分羊、猪、牛</span>等不同菌株：",
+                    options: ["A. 初次分离培养是否需要 CO2", "B. 是否产生内毒素", "C. 产生 H2S 的量及分解尿素的强弱（生化特性强度阶梯）", "D. 是否引起母畜流产", "E. 菌体是否有荚膜"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：临床上主要通过<span class='highlight'>产生 H2S 的多少</span>以及<span class='highlight'>分解尿素（脲酶试验）的强弱阶梯</span>来鉴别和区分布鲁氏菌株。",
+                    metaphor: "🏆 视觉锚定：看向左侧【B区】的领奖台。**1号冠军猪**正高举奖杯，屁股后面冒着滚滚浓烟（H2S最浓、脲酶最强）；**2号牛**拿了银牌排在后面；而**羊**只有最微弱的生化反应。这个生化强度阶梯，就是用来区分它们的铁证！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dd96284837_1779292514.webp" 
+                },
+                {
+                    id: 7,
+                    question: "8. 临床上分离和培养布氏杆菌时，常规**初次培养**常选用的<span class='q-hl'>特异性培养基</span>是：",
+                    options: ["A. 罗氏培养基", "B. 吕氏血清斜面", "C. 肝浸液培养基", "D. 鲍-金培养基", "E. SS琼脂平板"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：布鲁氏菌营养要求极高，常需要选用含丰富营养的<span class='highlight'>肝浸液培养基</span>进行首选分离培养。",
+                    metaphor: "🥩 视觉锚定：回想左侧生化【B区】。服务员切好的一盘盘**新鲜猪肝（肝浸液）**正摆在桌上。布氏菌极其挑食，不给肥美的“肝浸液”和巧克力平板，它是绝对不肯赏脸生长的。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dd962410cc_1779292514.webp" 
+                },
+                {
+                    id: 8,
+                    question: "9. 与布鲁氏菌的<span class='q-hl'>毒力及致病性</span>最为相关的物质是：",
+                    options: ["A. 外毒素", "B. 芽胞与鞭毛", "C.内毒素及侵袭性酶", "D. 透明质酸酶", "E. 红疹毒素"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：布鲁氏菌不产生外毒素，其主要致病物质是<span class='highlight'>内毒素、荚膜以及相关的侵袭性酶</span>。",
+                    metaphor: "💥 视觉锚定：看看那头领奖猪身上。它不仅屁股冒烟（脲酶等侵袭性酶），手里还抱着一个随时会爆炸的**内毒素炸弹**。布氏菌全靠<span class='highlight'>内毒素和侵袭性酶</span>在宿主体内翻江倒海。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dd962d463a_1779292514.webp" 
+                },
+                {
+                    id: 9,
+                    question: "10. 对布氏菌病的<span class='q-hl'>综合防治原则</span>，重点应当放在：",
+                    options: ["A. 对疫区人群进行普遍预防接种", "B. 对病人和晚期患者进行长久隔离", "C. 控制和消灭传染源、切断传播途径（如淘汰病畜与乳品巴氏消毒）", "D. 大大规模焚烧全部健康畜群", "E. 长期大剂量口服青霉素"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：布氏菌病防治重点在于<span class='highlight'>控制传染源和切断传播途径</span>（如家畜免疫、病畜淘汰、牛奶强制巴氏消毒）。",
+                    metaphor: "🥛 视觉锚定：视线移向右侧防线【C区】。传送带上正在对一瓶瓶**热牛奶进行巴氏消毒**，同时农场的**大铁门正牢牢关上**以防止病畜流出。切断喝生奶的途径，关上大门控制传染源，才是整个农场的安全核心！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dd9638db12_1779292515.webp" 
+                },
+                {
+                    id: 10,
+                    question: "11. 临床上收治一名持续3周<span class='q-hl'>左膝关节严重肿胀疼痛</span>、发热呈波浪型的老年女性，4周前曾食用了未经巴氏消毒的羊奶酪。抽取该患者的<span class='q-hl'>哪种标本</span>最适合做细菌分离培养：",
+                    options: ["A. 粪便", "B. 尿液", "C. 关节渗出液（或血液）", "D. 咳痰", "E. 呕吐物"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：布鲁氏菌急性期可采血液，当病变局限于严重的慢性关节炎、滑膜炎时，<span class='highlight'>关节渗出液</span>是极为关键的检测标本。",
+                    metaphor: "🦴 视觉锚定：这是一个真实的病例考题。带入我们的场景：那个喝了未消毒牛奶的游客，一脚踩进了农场里**最泥泞的“左膝关节形状的泥潭”**里。要抓出水里的细菌，当然要直接从这个<span class='highlight'>关节渗出液泥潭</span>里取水化验！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dd96332a5a_1779292515.webp" 
+                },
+                {
+                    id: 11,
+                    question: "12. 世界卫生组织（WHO）推荐的用于治疗布鲁氏菌病的<span class='q-hl'>标准联合用药方案</span>是：",
+                    options: ["A. 青霉素 + 头孢曲松", "B. 多西环素（强力霉素） + 利福平", "C. 红霉素 + 阿奇霉素", "D. 异烟肼 + 利福平", "E. 万古霉素 + 庆大霉素"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：布鲁氏菌病为胞内寄生且极易反复，临床首选标准治疗方案为<span class='highlight'>多西环素联合利福平</span>。",
+                    metaphor: "🔫 视觉锚定：看守农场大门的守卫【C区】身上。他右手提着一把**利福平步枪（Rifle/利福平）**，左手牵着一只**多西环素警犬（Doxy/多西环素）**。步枪配警犬，这就是消灭布鲁氏菌的<span class='highlight'>多西环素+利福平</span>黄金组合！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0dd964402e7_1779292516.webp" 
+                }
+            ];
+
+            let workingQueue = []; 
+            let currentIndex = 0;
+            const totalHitsToWin = originalQuizData.length;
+            let hitsRemaining = totalHitsToWin;
+            
+            let combo = 0;
+            let timerInterval;
+            let timeLeft = 15;
+            let wrongHistory = new Set(); 
+
+            let audioCtx = null;
+            let bgmInterval = null;
+            let isBgmPlaying = false;
+            let customBgmAudio = null;
+
+            function initAudio() { 
+                if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+                if(audioCtx.state === 'suspended') { audioCtx.resume(); } 
+            }
+
+            function startBGM() {
+                if(isBgmPlaying) return;
+                isBgmPlaying = true;
+                if (CustomMedia.bgm) {
+                    if (!customBgmAudio) { customBgmAudio = new Audio(CustomMedia.bgm); customBgmAudio.loop = true; }
+                    customBgmAudio.play().catch(e => console.log(e));
+                    return;
+                }
+                if (!audioCtx) return;
+                let tick = 0;
+                bgmInterval = setInterval(() => {
+                    if(audioCtx.state === 'suspended') return;
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    if(tick % 4 === 0) { 
+                        osc.frequency.setValueAtTime(140, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                    } else { 
+                        osc.frequency.setValueAtTime(180, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.05); gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                    }
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.1);
+                    tick++;
+                }, 600); 
+            }
+
+            function stopBGM() {
+                isBgmPlaying = false;
+                if (CustomMedia.bgm && customBgmAudio) { customBgmAudio.pause(); customBgmAudio.currentTime = 0; } 
+                else { clearInterval(bgmInterval); }
+            }
+
+            function playTone(type) {
+                if (type === 'correct' && CustomMedia.correct) { new Audio(CustomMedia.correct).play(); return; }
+                if (type === 'wrong' && CustomMedia.wrong) { new Audio(CustomMedia.wrong).play(); return; }
+                if (type === 'fever' && CustomMedia.fever) { new Audio(CustomMedia.fever).play(); return; }
+                if (type === 'win' && CustomMedia.win) { new Audio(CustomMedia.win).play(); return; }
+
+                if(!audioCtx) return;
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                if(type === 'correct') { 
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                } else if (type === 'wrong') { 
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.4, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                } else if (type === 'fever') { 
+                    osc.type = 'square'; osc.frequency.setValueAtTime(1200, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(2400, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4); osc.start(); osc.stop(audioCtx.currentTime + 0.4); 
+                } else if (type === 'win') { 
+                    const freqs = [440, 554, 659, 880, 1108]; 
+                    freqs.forEach((f, i) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.setValueAtTime(0, audioCtx.currentTime + i*0.1); g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + i*0.1 + 0.05); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i*0.1 + 1.0); o.start(audioCtx.currentTime + i*0.1); o.stop(audioCtx.currentTime + i*0.1 + 1.0); }); 
+                }
+            }
+
+            let particleInterval = null;
+            let vfxLayer = null;
+
+            // 确保在DOM加载完后再安全获取图层
+            document.addEventListener("DOMContentLoaded", () => {
+                vfxLayer = document.getElementById('vfx-layer');
+            });
+
+            function startFeverVFX() {
+                if(particleInterval || !vfxLayer) return;
+                particleInterval = setInterval(() => {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+                    p.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                    vfxLayer.appendChild(p);
+                    setTimeout(() => p.remove(), 3500);
+                }, 150);
+            }
+
+            function stopFeverVFX() { 
+                if (particleInterval) { clearInterval(particleInterval); particleInterval = null; }
+                if (vfxLayer) vfxLayer.innerHTML = ''; 
+            }
+
+            function triggerWinVFX() {
+                if (!vfxLayer) return;
+                for(let i=0; i<50; i++) {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = 50 + (Math.random() * 20 - 10) + '%'; p.style.top = 50 + (Math.random() * 20 - 10) + '%';
+                    p.style.width = p.style.height = (Math.random() * 6 + 3) + 'px';
+                    p.style.backgroundColor = `hsl(${Math.random() * 40 + 340}, 100%, 75%)`; 
+                    p.style.transform = `translate(${Math.random()*200-100}px, ${Math.random()*200-100}px)`;
+                    p.style.animation = 'floatUp 2s cubic-bezier(0.25, 1, 0.5, 1) forwards';
+                    vfxLayer.appendChild(p);
+                }
+                setTimeout(() => { if (vfxLayer) vfxLayer.innerHTML = ''; }, 2500);
+            }
+
+            const introScreen = document.getElementById('intro-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const endScreen = document.getElementById('end-screen');
+            const mainContainer = document.getElementById('main-container');
+            const rpgHeader = document.getElementById('rpg-header');
+            const hpBar = document.getElementById('hp-bar');
+            const hpText = document.getElementById('hp-text');
+            const comboText = document.getElementById('combo-text');
+            const timeLeftSpan = document.getElementById('time-left');
+            const optionsContainer = document.getElementById('options-container');
+            const hintBtn = document.getElementById('hint-btn');
+            const hintContainer = document.getElementById('hint-container');
+            const hintImg = document.getElementById('hint-img');
+            const feedbackCard = document.getElementById('feedback-card');
+            const retryWarning = document.getElementById('retry-warning');
+            const wrongGallery = document.getElementById('wrong-gallery');
+
+            window.startQuiz = function() {
+                initAudio(); startBGM(); 
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+                
+                updateUI();
+                document.getElementById('intro-screen').classList.add('hidden'); 
+                document.getElementById('end-screen').classList.add('hidden'); 
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                document.getElementById('rpg-header').style.display = 'flex';
+                loadQuestion();
+            };
+
+            window.restartQuiz = function() {
+                clearInterval(timerInterval); stopBGM(); stopFeverVFX();
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+
+                hpBar.style.width = '100%'; hpText.innerText = hitsRemaining;
+                comboText.classList.remove('show'); document.body.classList.remove('fever-mode');
+                feedbackCard.classList.remove('show'); hintContainer.style.display = 'none'; hintBtn.style.display = 'none';
+                
+                document.getElementById('end-screen').classList.add('hidden'); 
+                document.getElementById('quiz-screen').classList.add('hidden'); 
+                document.getElementById('rpg-header').style.display = 'none';
+                document.getElementById('intro-screen').classList.remove('hidden');
+            };
+
+            window.goToNext = function() {
+                window.location.href = "#";
+            };
+
+            function updateUI() {
+                if (hpText) hpText.innerText = hitsRemaining;
+                if (hpBar) hpBar.style.width = `${(hitsRemaining / totalHitsToWin) * 100}%`;
+                if(combo > 0) {
+                    if (comboText) { comboText.innerText = `Combo x${combo}! 🔥`; comboText.classList.add('show'); }
+                    if(combo >= 3) { document.body.classList.add('fever-mode'); startFeverVFX(); }
+                } else {
+                    if (comboText) comboText.classList.remove('show'); 
+                    document.body.classList.remove('fever-mode'); 
+                    stopFeverVFX();
+                }
+            }
+
+            function startTimer() {
+                clearInterval(timerInterval); timeLeft = 15; timeLeftSpan.innerText = timeLeft;
+                document.getElementById('timer-badge').classList.remove('danger');
+                timerInterval = setInterval(() => {
+                    timeLeft--; timeLeftSpan.innerText = timeLeft;
+                    if(timeLeft <= 5) document.getElementById('timer-badge').classList.add('danger');
+                    if(timeLeft <= 0) { clearInterval(timerInterval); handleTimeout(); }
+                }, 1000);
+            }
+
+            function loadQuestion() {
+                feedbackCard.classList.remove('show'); retryWarning.style.display = 'none'; hintContainer.style.display = 'none';
+                const currentQ = workingQueue[currentIndex];
+                document.getElementById('question-text').innerHTML = currentQ.question;
+                
+                if (combo >= 1 && currentQ.imageUrl) {
+                    hintBtn.style.display = 'block'; hintBtn.innerText = `🔍 消耗 1 Combo 刮开视觉线索 (当前 x${combo})`;
+                } else {
+                    hintBtn.style.display = 'none';
+                }
+
+                optionsContainer.innerHTML = '';
+                currentQ.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button'); btn.innerText = opt; btn.classList.add('option-btn');
+                    btn.onclick = () => window.resolveAnswer(idx, btn);
+                    optionsContainer.appendChild(btn);
+                });
+                startTimer();
+            }
+
+            window.useHint = function() {
+                if (combo < 1) return;
+                combo--; updateUI();
+                hintBtn.style.display = 'none'; hintContainer.style.display = 'block';
+                hintImg.src = workingQueue[currentIndex].imageUrl; hintImg.src && hintImg.classList.add('revealed');
+                setTimeout(() => { hintImg.classList.remove('revealed'); }, 3000);
+            };
+
+            function handleTimeout() {
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(btn => btn.disabled = true);
+                optionsButtons[currentQ.correctAnswer].classList.add('correct');
+                processResult(false, currentQ);
+            }
+
+            window.resolveAnswer = function(idx, btn) {
+                clearInterval(timerInterval);
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(b => b.disabled = true); hintBtn.style.display = 'none';
+
+                const isCorrect = (idx === currentQ.correctAnswer);
+                if (isCorrect) btn.classList.add('correct');
+                else { btn.classList.add('wrong'); optionsButtons[currentQ.correctAnswer].classList.add('correct'); }
+                processResult(isCorrect, currentQ);
+            };
+
+            function processResult(isCorrect, q) {
+                let msg = "";
+                if (isCorrect) {
+                    hitsRemaining--; combo++; playTone(combo >= 3 ? 'fever' : 'correct');
+                    msg = "✅ 击杀成功！大魔王受到重创！";
+                    retryWarning.style.color = "#2e7d32"; retryWarning.style.background = "#e8f5e9";
+                } else {
+                    combo = 0; wrongHistory.add(q.id); 
+                    mainContainer.classList.add('shake'); setTimeout(()=>mainContainer.classList.remove('shake'), 400);
+                    workingQueue.push(q); playTone('wrong');
+                    msg = "❌ 农场领主卷土重来！已退回队列末尾，准备再次追击！";
+                    retryWarning.style.color = "#c62828"; retryWarning.style.background = "#ffebee";
+                }
+
+                updateUI();
+                document.getElementById('fact-text').innerHTML = q.fact;
+                document.getElementById('metaphor-text').innerHTML = q.metaphor;
+                const fbImg = document.getElementById('feedback-img');
+                if (q.imageUrl) { fbImg.src = q.imageUrl; fbImg.style.display = 'block'; } else { fbImg.style.display = 'none'; }
+                
+                retryWarning.innerText = msg; retryWarning.style.display = 'block';
+                feedbackCard.classList.add('show');
+            }
+
+            window.nextQuestion = function() {
+                currentIndex++;
+                if (hitsRemaining > 0 && currentIndex < workingQueue.length) { loadQuestion(); } 
+                else {
+                    playTone('win'); stopBGM(); stopFeverVFX(); triggerWinVFX(); document.body.classList.remove('fever-mode');
+                    setTimeout(() => {
+                        document.getElementById('quiz-screen').classList.add('hidden'); 
+                        document.getElementById('rpg-header').style.display = 'none';
+                        generateGallery(); 
+                        document.getElementById('end-screen').classList.remove('hidden');
+                    }, 400);
+                }
+            };
+
+            function generateGallery() {
+                wrongGallery.innerHTML = ''; const subtitle = document.getElementById('gallery-subtitle');
+                if (wrongHistory.size === 0) {
+                    subtitle.innerHTML = "<span style='color: var(--correct-color); font-weight: bold;'>🌟 完美掌控农场！你的视觉映射无懈可击，没有遗忘任何碎片。</span>";
+                    return;
+                }
+                subtitle.innerHTML = `以下是你刚刚遗忘的 <b style="color:var(--primary-color)">${wrongHistory.size}</b> 块灰暗碎片。点击图片，重新点亮粉红农场的视觉锚点：`;
+                
+                wrongHistory.forEach(id => {
+                    const q = originalQuizData.find(item => item.id === id);
+                    if (!q || !q.imageUrl) return;
+                    const card = document.createElement('div'); card.className = 'gallery-item';
+                    card.innerHTML = `
+                        <div class="gallery-inner">
+                            <div class="gallery-front" style="background-image: url('${q.imageUrl}')"></div>
+                            <div class="gallery-back">
+                                <div class="gallery-back-title">${q.question.replace(/<[^>]+>/g, '').substring(3, 25)}...</div>
+                                <div class="gallery-back-desc">${q.metaphor.replace(/<[^>]+>/g, '')}</div>
+                            </div>
+                        </div>
+                    `;
+                    card.onclick = function() { this.classList.toggle('flipped'); };
+                    wrongGallery.appendChild(card);
+                });
+            }
+        } catch (error) { alert("代码引擎异常: " + error.message); }
+    </script>
+</body>
+</html>
