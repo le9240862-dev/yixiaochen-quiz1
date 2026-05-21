@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医小晨 - 大肠埃希菌 霓虹血色快餐店版</title>
+    <style>
+        :root {
+            /* 大肠埃希菌：公路尽头的血色旅行快餐店霓虹调 */
+            --primary-color: #ff2a6d; /* 代表G-霓虹红/粉的主色 */
+            --primary-light: #ffe5ec;
+            --primary-dark: #b3003b;
+            --bg-color: #0d0208; /* 快餐店深夜黑暗背景 */
+            --card-bg: #1a0f14; /* 带有微弱粉红调的深色卡片 */
+            --card-text: #ffffff;
+            --correct-color: #05d9e8; /* 霓虹青代表正确 */
+            --wrong-color: #ff2a6d; /* 霓虹红代表错误 */
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.3);
+            --shadow-lg: 0 15px 35px rgba(255, 42, 109, 0.25);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s;
+            overflow-x: hidden;
+        }
+
+        /* 狂暴模式与氛围特效（血色心流） */
+        body.fever-mode {
+            background-color: #2a000d;
+            animation: feverPulse 1.5s infinite alternate;
+        }
+        @keyframes feverPulse {
+            0% { box-shadow: inset 0 0 50px rgba(255, 42, 109, 0.4); }
+            100% { box-shadow: inset 0 0 150px rgba(255, 42, 109, 0.8); }
+        }
+
+        #vfx-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute; background: rgba(255, 42, 109, 0.8);
+            border-radius: 50%; animation: floatUp linear forwards;
+            box-shadow: 0 0 8px rgba(255, 42, 109, 0.8);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        .app-container {
+            max-width: 600px; width: 100%; background-color: var(--card-bg);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 42, 109, 0.2);
+            overflow: hidden; position: relative; z-index: 10;
+        }
+
+        /* 物理震动反馈 */
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* Boss 血条与 Combo UI */
+        .rpg-header {
+            background-color: #0a0508; padding: 15px 20px; display: none;
+            flex-direction: column; gap: 8px; border-bottom: 3px solid #ff2a6d;
+        }
+        .boss-info { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 14px; }
+        .hp-bar-bg { width: 100%; height: 14px; background-color: #33141e; border-radius: 7px; overflow: hidden; border: 1px solid #000; }
+        .hp-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #ff2a6d, #910030); width: 100%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(255, 42, 109, 0.8);
+        }
+        .combo-text {
+            color: #05d9e8; font-style: italic; font-size: 14px; font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s;
+        }
+        .combo-text.show { opacity: 1; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .content-padding { padding: 30px; }
+        .section-title { color: #ff2a6d; font-size: 22px; margin-bottom: 20px; text-align: center; font-weight: 800; text-shadow: 0 0 10px rgba(255,42,109,0.5); }
+        
+        /* 优化后的视频跳转引导卡片 */
+        .video-banner {
+            background: linear-gradient(135deg, #2a141d, #15080e);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-main);
+            border: 1px solid rgba(255,42,109,0.1);
+        }
+        .video-banner:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(255, 42, 109, 0.3);
+        }
+        .video-banner-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .video-title {
+            font-weight: 800;
+            color: #ff2a6d;
+            font-size: 15px;
+        }
+        .video-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .video-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(255, 42, 109, 0.4);
+            transition: background 0.2s;
+        }
+        .video-banner:hover .video-btn {
+            background: var(--primary-dark);
+        }
+
+        .panorama-img { width: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: 20px; display: block; min-height: 180px; background-color: #2a141d; object-fit: cover; border: 1px solid rgba(255,42,109,0.2); }
+
+        /* 走心的结构化介绍区块 */
+        .feature-block {
+            text-align: left; background: #21151a; padding: 15px; border-radius: 10px;
+            margin-bottom: 15px; border: 1px solid rgba(255,42,109,0.1);
+        }
+        .feature-title { font-weight: bold; color: #ff2a6d; margin-bottom: 5px; font-size: 15px; }
+        .feature-desc { font-size: 13px; color: var(--text-main); line-height: 1.6; }
+
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dashed rgba(255,42,109,0.2); }
+        .timer-badge { background-color: #33141e; color: #ff2a6d; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; border: 1px solid rgba(255,42,109,0.3); }
+        .timer-badge.danger { background-color: #4a0014; color: var(--wrong-color); animation: pulse 1s infinite; border-color: #ff2a6d; }
+        
+        /* 题干与选项样式 */
+        .question-text { font-size: 18px; font-weight: 500; margin-bottom: 25px; line-height: 1.6; color: #ffffff; }
+        .q-hl { 
+            font-weight: 800; color: #05d9e8; 
+            background: linear-gradient(120deg, rgba(5, 217, 232, 0.2) 0%, rgba(5, 217, 232, 0.2) 100%);
+            background-repeat: no-repeat; background-size: 100% 40%; background-position: 0 88%;
+            padding: 0 2px;
+        }
+
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background-color: #25181f; border: 2px solid #3d2532; border-radius: var(--radius-md); padding: 16px 20px; font-size: 16px; color: var(--text-main); text-align: left; cursor: pointer; transition: all 0.2s ease; font-weight: 500;}
+        .option-btn:hover:not(:disabled) { border-color: var(--primary-color); background-color: #381c27; transform: translateY(-2px); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; transform: none; }
+        .option-btn.correct { background-color: #102e35; border-color: var(--correct-color); color: #05d9e8; font-weight: bold; text-shadow: 0 0 5px rgba(5,217,232,0.5); }
+        .option-btn.wrong { background-color: #3a101a; border-color: var(--wrong-color); color: #ff2a6d; font-weight: bold; }
+
+        /* 场外援助（刮刮乐） */
+        .hint-btn {
+            background: none; border: 1px dashed var(--primary-color); color: var(--primary-color);
+            padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; 
+            width: 100%; margin-top: 15px; transition: 0.2s; display: none;
+        }
+        .hint-btn:hover { background: #33141e; }
+        .hint-img-container { display: none; margin-top: 15px; position: relative; border-radius: 8px; overflow: hidden; }
+        .hint-img { width: 100%; filter: blur(15px); transition: filter 0.3s; }
+        .hint-img.revealed { filter: blur(0); }
+        .hint-overlay-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 20px; pointer-events: none; border: 1px solid #ff2a6d; }
+
+        /* 解析区 */
+        .feedback-card { display: none; margin-top: 25px; background-color: #21151a; border: 2px solid #3d2532; padding: 20px; border-radius: var(--radius-md); position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.3); animation: slideUpFade 0.5s forwards; }
+        .feedback-card::before { content: ''; position: absolute; left: -2px; top: -2px; bottom: -2px; width: 6px; background-color: var(--primary-color); border-radius: 10px 0 0 10px; }
+        .feedback-card.show { display: block; }
+        .feedback-img { width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; border: 1px solid rgba(255,42,109,0.3); }
+        
+        .highlight { color: #ff2a6d; font-weight: bold; background: #3a101a; padding: 2px 6px; border-radius: 4px; margin: 0 2px; border: 1px solid rgba(255,42,109,0.2); }
+        .fact-text { font-size: 15px; color: #ffffff; margin-bottom: 12px; line-height: 1.7; background-color: #170d12; padding: 12px 15px; border-radius: 8px; border: 1px solid rgba(255,42,109,0.1); }
+        .metaphor-text { font-size: 15px; color: #e0e0e0; line-height: 1.7; padding: 0 5px; }
+        
+        .retry-warning { display: none; margin-top: 15px; padding: 10px; border-radius: 8px; background-color: #3a101a; color: #ff2a6d; font-size: 14px; font-weight: bold; text-align: center; border: 1px solid rgba(255,42,109,0.3); }
+
+        /* 错题画廊 (通关复盘) */
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
+        .gallery-item { perspective: 1000px; cursor: pointer; height: 160px; }
+        .gallery-inner { width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; border-radius: 12px; box-shadow: var(--shadow-sm); }
+        .gallery-item:hover .gallery-inner { box-shadow: 0 8px 15px rgba(255,42,109,0.2); }
+        .gallery-item.flipped .gallery-inner { transform: rotateY(180deg); }
+        
+        .gallery-front, .gallery-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 12px; overflow: hidden; }
+        .gallery-front { background-size: cover; background-position: center; filter: grayscale(100%) brightness(0.5); transition: filter 0.3s; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,42,109,0.2); }
+        .gallery-front::after { content: '点击翻转 🔄'; color: white; background: rgba(255, 42, 109, 0.85); padding: 8px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .gallery-item.flipped .gallery-front { filter: grayscale(0%) brightness(1); } 
+        
+        .gallery-back { background-color: #21151a; transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 2px solid var(--primary-color); }
+        .gallery-back-title { font-size: 13px; font-weight: bold; color: #ff2a6d; margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .gallery-back-desc { font-size: 12px; color: var(--text-main); line-height: 1.5; }
+
+        .primary-btn { width: 100%; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(255, 42, 109, 0.4); margin-top: 15px; }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 42, 109, 0.6); }
+        
+        /* 次级按钮（重置关卡） */
+        .secondary-btn { background: #2d1b24; color: #a0a0a0; box-shadow: none; margin-top: 10px; font-size: 15px; padding: 14px; border: 1px solid #3d2532;}
+        .secondary-btn:hover { background: #3d2532; color: #ffffff; }
+
+        .hidden { display: none !important; }
+
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="vfx-layer"></div>
+
+    <div class="app-container" id="main-container">
+        <div class="rpg-header" id="rpg-header">
+            <div class="boss-info">
+                <span>🍔 大肠埃希菌·血色领主</span>
+                <span class="combo-text" id="combo-text">Combo x3! 🔥</span>
+                <span>剩余HP: <span id="hp-text">13</span></span>
+            </div>
+            <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-bar"></div></div>
+        </div>
+
+        <div id="intro-screen" class="content-padding">
+            <h1 class="section-title">🩸 记忆宫殿刷题：大肠埃希菌</h1>
+
+            <a href="http://xhslink.com/o/oQSdSVxLvk" class="video-banner" id="video-banner-link" target="_blank">
+                <div class="video-banner-content">
+                    <span class="video-title">▶️ 建议先花3分钟看下这期【大肠杆菌血色快餐店电影】</span>
+                    <span class="video-desc">搭配记忆宫殿剧情和音效，把干瘪的生化特性刷成肌肉记忆 ⸜(๑'ᵕ'๑)⸝⋆*</span>
+                </div>
+                <span class="video-btn">去小红书观看 ↗</span>
+            </a>
+
+            <img class="panorama-img" id="intro-panorama" src="https://img.cdn1.vip/i/6a0d3c9423091_1779252372.webp" alt="大肠埃希菌全景图">
+
+            <div class="feature-block">
+                <div class="feature-title">📚 绝密高频期末刷题库</div>
+                <div class="feature-desc">提取自大二西医期末高频重灾区，锁定肠道杆菌最核心的生化鉴别反应、肠道内外各型致病菌，一站式搞定高频考点！vig'ᴗ' hi</div>
+            </div>
+            <div class="feature-block">
+                <div class="feature-title">⚡️ 霓虹快餐店空间锚定</div>
+                <div class="feature-desc">全店血色灯光(G-)、溜冰鞋服务员(周鞭毛)、喷酸牛奶机(发酵乳糖)。闭上眼，答案就在快餐店的每个角落 ୧⍢⃝୨</div>
+            </div>
+
+            <button class="primary-btn" onclick="startQuiz()" style="margin-top: 10px;">突袭血色快餐店 ⚔️</button>
+        </div>
+
+        <div id="quiz-screen" class="content-padding hidden">
+            <div class="header-info">
+                <span style="font-weight: bold; color: var(--primary-color);">🎯 高频核心考点扫荡</span>
+                <div class="timer-badge" id="timer-badge">⏳ <span id="time-left">15</span>s</div>
+            </div>
+
+            <div class="question-text" id="question-text">题目加载中...</div>
+            <div class="options-container" id="options-container"></div>
+            
+            <button class="hint-btn" id="hint-btn" onclick="useHint()">🔍 消耗 1 Combo 刮开视觉线索</button>
+            <div class="hint-img-container" id="hint-container">
+                <img class="hint-img" id="hint-img" src="">
+                <div class="hint-overlay-text" id="hint-overlay">已刮开 (3秒后变暗)</div>
+            </div>
+
+            <div class="feedback-card" id="feedback-card">
+                <img id="feedback-img" class="feedback-img" src="">
+                <div class="fact-text" id="fact-text"></div>
+                <div class="metaphor-text" id="metaphor-text"></div>
+                <div class="retry-warning" id="retry-warning"></div>
+                <button class="primary-btn" id="next-btn" onclick="nextQuestion()">继续追击 ➡️</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="content-padding hidden">
+            <h1 class="section-title">🎉 霓虹战役大捷</h1>
+            <p class="section-subtitle" id="gallery-subtitle" style="margin-bottom: 15px;">以下是你刚刚遗忘的灰暗碎片。点击图片，重新点亮视觉锚点并翻转复盘。</p>
+            
+            <div class="gallery-grid" id="wrong-gallery"></div>
+
+            <button class="primary-btn" onclick="goToNext()">🗺️ 开启下一战役</button>
+            <button class="primary-btn secondary-btn" onclick="restartQuiz()">🔄 重置当前关卡</button>
+
+            <p style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 20px;">
+                快餐店硝烟散去，遗忘碎片已全部重铸。若想夯实考点，可随时回顾配套电影。
+            </p>
+        </div>
+    </div>
+
+    <script>
+        try {
+            const CustomMedia = {
+                introImage: "https://img.cdn1.vip/i/6a0d3c9423091_1779252372.webp", 
+                bgm: "",        
+                correct: "",    
+                wrong: "",      
+                fever: "",      
+                win: ""         
+            };
+
+            // 👁️ 大肠埃希菌·专属完全体精选视觉刷题库（13道核心高频题）
+            const originalQuizData = [
+                {
+                    id: 0,
+                    question: "1. 关于大肠埃希菌的<span class='q-hl'>形态与结构特性</span>，下列哪项是正确的？",
+                    options: ["A. 均为革兰阳性球菌", "B. 多数菌株有周身鞭毛，有普通菌毛和性菌毛", "C. 均能形成芽胞，有较厚M抗原", "D. 属于无动力的无荚膜致病菌"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：大肠埃希菌属于<span class='highlight'>革兰阴性(G⁻)杆菌</span>，无芽胞，绝大多数菌株具有<span class='highlight'>周身鞭毛</span>（有动力）和<span class='highlight'>菌毛</span>（用于黏附）。",
+                    metaphor: "🧱 视觉锚定：整个快餐店笼罩在<span class='highlight'>红色霓虹灯光</span>中(G⁻)，那个**脚踩溜冰鞋疯狂穿梭的服务员**意味着它具备强大的周鞭毛运动力；而她**手臂上死死端住盘子的细长毛刺**正是它致病的关键——菌毛！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d3e1e9eb7d_1779252766.webp" 
+                },
+                {
+                    id: 1,
+                    question: "2. 肠道致病菌（如沙门菌、志贺菌）与非致病菌在生化反应上进行<span class='q-hl'>初步鉴别和选用</span>的最主要依据是：",
+                    options: ["A. 葡萄糖发酵试验", "B. 乳糖发酵试验", "C. 吲哚试验", "D. 甲基红试验"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：鉴别肠道致病菌与非致病菌最常用的生化试验是<span class='highlight'>乳糖发酵试验</span>。非致病菌（如普通大肠杆菌）多数发酵乳糖，而多数肠道致病菌不发酵乳糖。",
+                    metaphor: "🥛 视觉锚定：视线移向左侧吧台区。那个正在搅拌并**喷射出酸腐液体、冒出大量气泡的粉红牛奶机**，就是它能发酵乳糖、产酸产气的最强铁证！而真正的致病菌（沙门、志贺）可不喝这杯粉红牛奶。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d3e1e4d3a0_1779252766.webp"
+                },
+                {
+                    id: 2,
+                    question: "3. 典型大肠埃希菌的<span class='q-hl'>IMViC 试验结果</span>应为：",
+                    options: ["A. ＋ ＋ －－", "B. －－ ＋ ＋", "C. ＋ － ＋ －", "D. － ＋ － ＋"],
+                    correctAnswer: 0, 
+                    fact: "🎯 核心事实：大肠埃希菌典型的生化特性结果是：<span class='highlight'>吲哚(+)、甲基红(+)、VP(-)、枸橼酸盐(-)</span>，简写为 IMViC (++--)。",
+                    metaphor: "📟 视觉锚定：看看吧台区上方悬挂的巨大霓虹灯牌，上面闪烁着几个极其耀眼的大字：**IMViC 试验结果为 ++--**。记住这块霓虹牌，这跟产气肠杆菌(--++)完美互补，逢考必出！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d3e1d856b2_1779252765.webp"
+                },
+                {
+                    id: 3,
+                    question: "4. 大肠埃希菌耐热肠毒素(ST)激活肠黏膜上皮细胞中的酶，进而引起的<span class='q-hl'>致病机制</span>是：",
+                    options: ["A. 激活腺苷酸环化酶，使 cAMP 升高导致水样便", "B. 激活鸟苷环化酶，使 cGMP 升高导致水样便", "C. 抑制蛋白质合成中的延长因子-2", "D. 破坏肠壁血管，直接导致脓血便"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：ETEC 产生不耐热肠毒素(LT)和耐热肠毒素(ST)。其中<span class='highlight'>ST能激活鸟苷环化酶(GC)</span>，导致细胞内 cGMP 升高，抑制肠黏膜对水、电解质的吸收而引起水样腹泻。",
+                    metaphor: "🎒 视觉锚定：注意中央用餐区那个**拿行李箱、挂着相机的倒霉旅行客(ETEC)**。他喝了杯清水结果开始疯狂拉水样便。拉出来的**清水甚至在大腿凳子下汇聚成小溪**，这是肠毒素在小肠发威，不伤黏膜，只开水闸！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d407a3c951_1779253370.webp"
+                },
+                {
+                    id: 4,
+                    question: "5. 引起<span class='q-hl'>婴幼儿和旅游者腹泻</span>，临床表现为霍乱样水样便的大肠埃希菌是：",
+                    options: ["A. EIEC", "B. EPEC", "C. ETEC", "D. EHEC"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：<span class='highlight'>肠产毒性大肠埃希菌(ETEC)</span>是引起婴幼儿和旅游者腹泻（霍乱样腹泻）的罪魁祸首。",
+                    metaphor: "🧳 视觉锚定：再次锁定中央用餐区的**食客1：到霉游客(ETEC)**。他的全套装备（旅行箱、相机）就差把“旅游者”三个字写在脸上了。他捂着肚子痛苦不堪，这就是“旅游者腹泻”的经典视觉模型！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d407c7d837_1779253372.webp"
+                },
+                {
+                    id: 5,
+                    question: "6. 一个5岁男孩吃完快餐汉堡后，出现严重腹痛和血便。伴发溶血性贫血及多器官衰竭的<span class='highlight'>溶血性尿毒综合征(HUS)</span>，你判断最可能的病原体是：",
+                    options: ["A. 肠产毒性大肠埃希菌(ETEC)", "B. 肠出血性大肠埃希菌(EHEC)", "C. 肠侵袭性大肠埃希菌(EIEC)", "D. 福氏志贺菌"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：<span class='highlight'>肠出血性大肠埃希菌(EHEC)</span>，特别是 O157:H7 血清型，主要引起出血性结肠炎，其致命并发症就是溶血性尿毒综合征(HUS)。",
+                    metaphor: "🥩 视觉锚定：盯住中央用餐区的**食客2：狂暴的暴徒(EHEC)**。他正疯狂撕咬着一个**疯狂滴鲜血的生汉堡**，这意味着他是由于进食未熟透牛肉引发的鲜血便！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d456d1ade3_1779254637.webp"
+                },
+                {
+                    id: 6,
+                    question: "7. 肠出血性大肠杆菌(EHEC)能产生志贺样毒素，其<span class='q-hl'>主要的 O 血清型</span>是：",
+                    options: ["A. O6", "B. O111", "C. O157", "D. O25"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：主要引起肠出血和 HUS 的肠出血性大肠杆菌的典型 O 血清型是 <span class='highlight'>O157:H7</span>。",
+                    metaphor: "🍅 视觉锚定：看看暴徒桌上那包被他**一巴掌拍爆裂的肾脏形番茄酱包**！爆出来的番茄酱代表严重的致命并发症——**HUS(溶血性尿毒综合征)**。这包危险的番茄酱上明晃晃地印着：**O157**！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d456cd8420_1779254636.webp"
+                },
+                {
+                    id: 7,
+                    question: "8. 某患者参加聚餐后出现发热、腹痛、腹泻。第4次大便便中有黏液物质且色红，第5次想排便但无粪便排出（里急后重），<span class='q-hl'>所致疾病极像菌痢</span>的大肠埃希菌为：",
+                    options: ["A. ETEC", "B. EIEC", "C. EPEC", "D. EHEC"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：<span class='highlight'>肠侵袭性大肠埃希菌(EIEC)</span>主要侵犯大肠，引起侵袭性炎症，其临床症状（脓血便、里急后重）与细菌性痢疾（志贺菌感染）极其相似。",
+                    metaphor: "⚔️ 视觉锚定：我们可以将这个EIEC称作“伪装成菌痢的刺客”。她就躲在中央桌子后面，手里拿着**一把侵袭性匕首(侵袭黏膜)**。虽然快餐店全景图没单独画出她，幕后隐喻的逻辑也完全相同，导致病人的大便里带了脓血和黏液！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d456c8d76d_1779254636.webp" 
+                },
+                {
+                    id: 8,
+                    question: "9. 从尿路感染患者尿中分离出革兰阴性杆菌，常用来<span class='q-hl'>诊断尿道感染有意义金标准</span>的结果是：",
+                    options: ["A. 每毫升尿含大肠埃希菌量为 1 000 以上", "B. 每毫升尿含大肠埃希菌量为 10 000 以上", "C. 每毫升尿含大肠埃希菌量为 100 000 (10⁵) 以上", "D. 镜检尿大肠杆菌正常生长即可"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：普通大肠埃希菌是尿路感染（如肾盂肾炎）最常见的病原菌，临床确诊金标准是中段尿培养<span class='highlight'>细菌数 $\ge 10^5/\text{ml}$</span>。",
+                    metaphor: "🧯 视觉锚定：视线转入右侧走廊区。那个**膀胱形状的金色消防栓**正在由下往上疯狂喷射水柱，这正隐喻着尿路系统及危险的**“上行性感染”**！消防栓旁边的压力表指针已经死死定格在：**$\ge 100,000$**！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d457117a8f_1779254641.webp"
+                },
+                {
+                    id: 9,
+                    question: "10. 大肠埃希菌之所以能够逆流而上，引起<span class='q-hl'>最常见的肾盂肾炎和上行尿路感染</span>，主要原因是：",
+                    options: ["A. 分解尿素产生毒素", "B. 具有能特异结合尿路上皮细胞的特殊菌毛", "C. 属于膀胱内的正常菌群", "D. 具有抵抗尿液冲刷的厚荚膜"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：普通大肠埃希菌之所以是肾盂肾炎最常见的病原菌，是因为它具有<span class='highlight'>特殊的定居因子菌毛</span>，能特异性吸附于尿路上皮细胞上，防止被尿液冲刷。",
+                    metaphor: "🧯 视觉锚定：回想那根**向上喷射的消防栓**。水流冲击力那么大，细菌为什么没被冲走？因为这群怪物身上长满了长刺菌毛，像攀岩一样死死抓住了尿路管道的墙壁！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d456f50364_1779254639.webp"
+                },
+                {
+                    id: 10,
+                    question: "11. 在我国，引发<span class='q-hl'>新生儿脑膜炎</span>多见的仅次于 B 群链球菌的病原菌是：",
+                    options: ["A. 流感嗜血杆菌", "B. 肺炎链球菌", "C. 绿脓杆菌", "D. 大肠杆菌"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：大肠埃希菌是引起<span class='highlight'>新生儿脑膜炎</span>的主要病原菌之一（由于分娩时穿过产道感染），但在成人中极少引起脑膜炎。",
+                    metaphor: "👶 视觉锚定：看向消防栓右下方。躺在婴儿车里的**小婴儿戴着一个发热、燃着火焰的大脑头盔**！小婴儿限定(新生儿) + 烧灼的大脑(脑膜炎)，这就是大肠杆菌对新生儿中枢神经的特异性打击！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d457011bc8_1779254640.webp"
+                },
+                {
+                    id: 11,
+                    question: "12. 我国饮用水和食品卫生学标准规定，大肠菌群指数的<span class='q-hl'>卫生卫生标准</span>是：",
+                    options: ["A. 每 100ml 饮用水中细菌总数不超过 100 个", "B. 每 1000ml 饮用水中大肠菌群数不得超过 3 个", "C. 每 100ml 饮用水中不得检出大肠菌群", "D. 每 1000ml 饮用水中大肠菌群数不超过 100 个"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：大肠菌群常作为粪便污染的卫生学指标。饮水卫生标准严格规定，<span class='highlight'>每 1000ml (1L) 饮用水中大肠菌群数不得超过 3 个</span>。",
+                    metaphor: "🪣 视觉锚定：看走廊最右侧那桶**被铁链死死锁住、贴着警告封条的纯净水桶**！水桶上面赫然写着：**$\le 3/1000\text{ml}$**。警告大家：绝不允许让超过3个大肠杆菌怪物污染了这桶纯净水！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d457147d0e_1779254641.webp"
+                },
+                {
+                    id: 12,
+                    question: "13. 肠道杆菌在发生 S-R 变异（光滑型向粗糙型变异）时，主要是<span class='q-hl'>失去了什么抗原</span>？",
+                    options: ["A. 鞭毛 H 抗原", "B. 荚膜 K 抗原", "C. 菌体 O 抗原", "D. 毒力 Vi 抗原"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：大肠埃希菌等肠道杆菌主要有 O、H、K 抗原。当发生 S-R 变异时，由于**失去了特异性菌体 O 抗原中的特异性多糖**，菌落从光滑(Smooth)变为粗糙(Rough)。",
+                    metaphor: "🧬 视觉锚定：如果快餐店发生突变，光滑的霓虹灯墙面突然**全部碎裂变成粗糙的砖头(S-R变异)**，那是由于包裹在细菌最外层的**菌体 O 抗原外衣被彻底扒掉**了。外衣没了，自然就露出了粗糙的本质！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d4571655ad_1779254641.webp" 
+                }
+            ];
+
+            let workingQueue = []; 
+            let currentIndex = 0;
+            const totalHitsToWin = originalQuizData.length;
+            let hitsRemaining = totalHitsToWin;
+            
+            let combo = 0;
+            let timerInterval;
+            let timeLeft = 15;
+            let wrongHistory = new Set(); 
+
+            let audioCtx = null;
+            let bgmInterval = null;
+            let isBgmPlaying = false;
+            let customBgmAudio = null;
+
+            function initAudio() { 
+                if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+                if(audioCtx.state === 'suspended') { audioCtx.resume(); } 
+            }
+
+            function startBGM() {
+                if(isBgmPlaying) return;
+                isBgmPlaying = true;
+                if (CustomMedia.bgm) {
+                    if (!customBgmAudio) { customBgmAudio = new Audio(CustomMedia.bgm); customBgmAudio.loop = true; }
+                    customBgmAudio.play().catch(e => console.log(e));
+                    return;
+                }
+                if (!audioCtx) return;
+                let tick = 0;
+                bgmInterval = setInterval(() => {
+                    if(audioCtx.state === 'suspended') return;
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    if(tick % 4 === 0) { 
+                        osc.frequency.setValueAtTime(100, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    } else { 
+                        osc.frequency.setValueAtTime(140, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.05); gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                    }
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.1);
+                    tick++;
+                }, 600); 
+            }
+
+            function stopBGM() {
+                isBgmPlaying = false;
+                if (CustomMedia.bgm && customBgmAudio) { customBgmAudio.pause(); customBgmAudio.currentTime = 0; } 
+                else { clearInterval(bgmInterval); }
+            }
+
+            function playTone(type) {
+                if (type === 'correct' && CustomMedia.correct) { new Audio(CustomMedia.correct).play(); return; }
+                if (type === 'wrong' && CustomMedia.wrong) { new Audio(CustomMedia.wrong).play(); return; }
+                if (type === 'fever' && CustomMedia.fever) { new Audio(CustomMedia.fever).play(); return; }
+                if (type === 'win' && CustomMedia.win) { new Audio(CustomMedia.win).play(); return; }
+
+                if(!audioCtx) return;
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                if(type === 'correct') { 
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(750, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25); osc.start(); osc.stop(audioCtx.currentTime + 0.25); 
+                } else if (type === 'wrong') { 
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(130, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.4, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                } else if (type === 'fever') { 
+                    osc.type = 'square'; osc.frequency.setValueAtTime(1100, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(2200, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4); osc.start(); osc.stop(audioCtx.currentTime + 0.4); 
+                } else if (type === 'win') { 
+                    const freqs = [392, 523, 659, 784, 1046]; 
+                    freqs.forEach((f, i) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.setValueAtTime(0, audioCtx.currentTime + i*0.1); g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + i*0.1 + 0.05); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i*0.1 + 1.0); o.start(audioCtx.currentTime + i*0.1); o.stop(audioCtx.currentTime + i*0.1 + 1.0); }); 
+                }
+            }
+
+            let particleInterval = null;
+            const vfxLayer = document.getElementById('vfx-layer');
+
+            function startFeverVFX() {
+                if(particleInterval) return;
+                particleInterval = setInterval(() => {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+                    p.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                    vfxLayer.appendChild(p);
+                    setTimeout(() => p.remove(), 3500);
+                }, 150);
+            }
+
+            function stopFeverVFX() { clearInterval(particleInterval); particleInterval = null; vfxLayer.innerHTML = ''; }
+
+            function triggerWinVFX() {
+                for(let i=0; i<50; i++) {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = 50 + (Math.random() * 20 - 10) + '%'; p.style.top = 50 + (Math.random() * 20 - 10) + '%';
+                    p.style.width = p.style.height = (Math.random() * 6 + 3) + 'px';
+                    p.style.backgroundColor = `hsl(${Math.random() * 40 - 10}, 100%, 50%)`; 
+                    p.style.transform = `translate(${Math.random()*200-100}px, ${Math.random()*200-100}px)`;
+                    p.style.animation = 'floatUp 2s cubic-bezier(0.25, 1, 0.5, 1) forwards';
+                    vfxLayer.appendChild(p);
+                }
+                setTimeout(() => { vfxLayer.innerHTML = ''; }, 2500);
+            }
+
+            const introScreen = document.getElementById('intro-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const endScreen = document.getElementById('end-screen');
+            const mainContainer = document.getElementById('main-container');
+            const rpgHeader = document.getElementById('rpg-header');
+            const hpBar = document.getElementById('hp-bar');
+            const hpText = document.getElementById('hp-text');
+            const comboText = document.getElementById('combo-text');
+            const timeLeftSpan = document.getElementById('time-left');
+            const optionsContainer = document.getElementById('options-container');
+            const hintBtn = document.getElementById('hint-btn');
+            const hintContainer = document.getElementById('hint-container');
+            const hintImg = document.getElementById('hint-img');
+            const feedbackCard = document.getElementById('feedback-card');
+            const retryWarning = document.getElementById('retry-warning');
+            const wrongGallery = document.getElementById('wrong-gallery');
+
+            window.startQuiz = function() {
+                initAudio(); startBGM(); 
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+                
+                updateUI();
+                introScreen.classList.add('hidden'); endScreen.classList.add('hidden'); quizScreen.classList.remove('hidden');
+                rpgHeader.style.display = 'flex';
+                loadQuestion();
+            };
+
+            window.restartQuiz = function() {
+                clearInterval(timerInterval); stopBGM(); stopFeverVFX();
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+
+                hpBar.style.width = '100%'; hpText.innerText = hitsRemaining;
+                comboText.classList.remove('show'); document.body.classList.remove('fever-mode');
+                feedbackCard.classList.remove('show'); hintContainer.style.display = 'none'; hintBtn.style.display = 'none';
+                
+                endScreen.classList.add('hidden'); quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                introScreen.classList.remove('hidden');
+            };
+
+            window.goToNext = function() {
+                window.location.href = "#";
+            };
+
+            function updateUI() {
+                hpText.innerText = hitsRemaining;
+                hpBar.style.width = `${(hitsRemaining / totalHitsToWin) * 100}%`;
+                if(combo > 0) {
+                    comboText.innerText = `Combo x${combo}! 🔥`; comboText.classList.add('show');
+                    if(combo >= 3) { document.body.classList.add('fever-mode'); startFeverVFX(); }
+                } else {
+                    comboText.classList.remove('show'); document.body.classList.remove('fever-mode'); stopFeverVFX();
+                }
+            }
+
+            function startTimer() {
+                clearInterval(timerInterval); timeLeft = 15; timeLeftSpan.innerText = timeLeft;
+                document.getElementById('timer-badge').classList.remove('danger');
+                timerInterval = setInterval(() => {
+                    timeLeft--; timeLeftSpan.innerText = timeLeft;
+                    if(timeLeft <= 5) document.getElementById('timer-badge').classList.add('danger');
+                    if(timeLeft <= 0) { clearInterval(timerInterval); handleTimeout(); }
+                }, 1000);
+            }
+
+            function loadQuestion() {
+                feedbackCard.classList.remove('show'); retryWarning.style.display = 'none'; hintContainer.style.display = 'none';
+                const currentQ = workingQueue[currentIndex];
+                document.getElementById('question-text').innerHTML = currentQ.question;
+                
+                if (combo >= 1 && currentQ.imageUrl) {
+                    hintBtn.style.display = 'block'; hintBtn.innerText = `🔍 消耗 1 Combo 刮开视觉线索 (当前 x${combo})`;
+                } else {
+                    hintBtn.style.display = 'none';
+                }
+
+                optionsContainer.innerHTML = '';
+                currentQ.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button'); btn.innerText = opt; btn.classList.add('option-btn');
+                    btn.onclick = () => window.resolveAnswer(idx, btn);
+                    optionsContainer.appendChild(btn);
+                });
+                startTimer();
+            }
+
+            window.useHint = function() {
+                if (combo < 1) return;
+                combo--; updateUI();
+                hintBtn.style.display = 'none'; hintContainer.style.display = 'block';
+                hintImg.src = workingQueue[currentIndex].imageUrl; hintImg.classList.add('revealed');
+                setTimeout(() => { hintImg.classList.remove('revealed'); }, 3000);
+            };
+
+            function handleTimeout() {
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(btn => btn.disabled = true);
+                optionsButtons[currentQ.correctAnswer].classList.add('correct');
+                processResult(false, currentQ);
+            }
+
+            window.resolveAnswer = function(idx, btn) {
+                clearInterval(timerInterval);
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(b => b.disabled = true); hintBtn.style.display = 'none';
+
+                const isCorrect = (idx === currentQ.correctAnswer);
+                if (isCorrect) btn.classList.add('correct');
+                else { btn.classList.add('wrong'); optionsButtons[currentQ.correctAnswer].classList.add('correct'); }
+                processResult(isCorrect, currentQ);
+            };
+
+            function processResult(isCorrect, q) {
+                let msg = "";
+                if (isCorrect) {
+                    hitsRemaining--; combo++; playTone(combo >= 3 ? 'fever' : 'correct');
+                    msg = "✅ 狙击成功！大肠杆菌血量大幅削减！";
+                    retryWarning.style.color = "#05d9e8"; retryWarning.style.background = "#102e35";
+                } else {
+                    combo = 0; wrongHistory.add(q.id); 
+                    mainContainer.classList.add('shake'); setTimeout(()=>mainContainer.classList.remove('shake'), 400);
+                    workingQueue.push(q); playTone('wrong');
+                    msg = "❌ 怪物已逃逸并在快餐店队尾重生，准备迎战！";
+                    retryWarning.style.color = "#ff2a6d"; retryWarning.style.background = "#3a101a";
+                }
+
+                updateUI();
+                document.getElementById('fact-text').innerHTML = q.fact;
+                document.getElementById('metaphor-text').innerHTML = q.metaphor;
+                const fbImg = document.getElementById('feedback-img');
+                if (q.imageUrl) { fbImg.src = q.imageUrl; fbImg.style.display = 'block'; } else { fbImg.style.display = 'none'; }
+                
+                retryWarning.innerText = msg; retryWarning.style.display = 'block';
+                feedbackCard.classList.add('show');
+            }
+
+            window.nextQuestion = function() {
+                currentIndex++;
+                if (hitsRemaining > 0 && currentIndex < workingQueue.length) { loadQuestion(); } 
+                else {
+                    playTone('win'); stopBGM(); stopFeverVFX(); triggerWinVFX(); document.body.classList.remove('fever-mode');
+                    setTimeout(() => {
+                        quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                        generateGallery(); endScreen.classList.remove('hidden');
+                    }, 400);
+                }
+            };
+
+            function generateGallery() {
+                wrongGallery.innerHTML = ''; const subtitle = document.getElementById('gallery-subtitle');
+                if (wrongHistory.size === 0) {
+                    subtitle.innerHTML = "<span style='color: var(--correct-color); font-weight: bold;'>🌟 完美通关！快餐店全景考点已被你彻底斩获，记忆零遗忘！</span>";
+                    return;
+                }
+                subtitle.innerHTML = `以下是你刚刚遗忘的 <b style="color:var(--primary-color)">${wrongHistory.size}</b> 处场景碎片。点击卡片，重新翻转对齐记忆锚点。`;
+                
+                wrongHistory.forEach(id => {
+                    const q = originalQuizData.find(item => item.id === id);
+                    if (!q || !q.imageUrl) return;
+                    const card = document.createElement('div'); card.className = 'gallery-item';
+                    card.innerHTML = `
+                        <div class="gallery-inner">
+                            <div class="gallery-front" style="background-image: url('${q.imageUrl}')"></div>
+                            <div class="gallery-back">
+                                <div class="gallery-back-title">${q.question.replace(/<[^>]+>/g, '').substring(3, 25)}...</div>
+                                <div class="gallery-back-desc">${q.metaphor.replace(/<[^>]+>/g, '')}</div>
+                            </div>
+                        </div>
+                    `;
+                    card.onclick = function() { this.classList.toggle('flipped'); };
+                    wrongGallery.appendChild(card);
+                });
+            }
+        } catch (error) { alert("快餐店核心引擎异常: " + error.message); }
+    </script>
+</body>
+</html>
