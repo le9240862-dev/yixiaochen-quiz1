@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医小晨 - 霍乱弧菌 沉浸心流版</title>
+    <style>
+        :root {
+            /* 霍乱弧菌：暗视野深海基地与G-红色警报调 */
+            --primary-color: #e53935; /* 代表G-红色/粉红潜艇的主色 */
+            --primary-light: #ffebee;
+            --primary-dark: #b71c1c;
+            --bg-color: #121824; /* 深海暗视野背景 */
+            --card-bg: #ffffff;
+            --correct-color: #43a047;
+            --wrong-color: #d32f2f;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-lg: 0 15px 35px rgba(229, 57, 53, 0.15);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s;
+            overflow-x: hidden;
+        }
+
+        /* 狂暴模式与氛围特效（深海猩红心流） */
+        body.fever-mode {
+            background-color: #0d0202;
+            animation: feverPulse 2s infinite alternate;
+        }
+        @keyframes feverPulse {
+            0% { box-shadow: inset 0 0 50px rgba(229, 57, 53, 0.3); }
+            100% { box-shadow: inset 0 0 150px rgba(229, 57, 53, 0.7); }
+        }
+
+        #vfx-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute; background: rgba(255, 23, 68, 0.8);
+            border-radius: 50%; animation: floatUp linear forwards;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        .app-container {
+            max-width: 600px; width: 100%; background-color: var(--card-bg);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+            overflow: hidden; position: relative; z-index: 10;
+        }
+
+        /* 物理震动反馈 */
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* Boss 血条与 Combo UI */
+        .rpg-header {
+            background-color: #0b0f19; padding: 15px 20px; display: none;
+            flex-direction: column; gap: 8px; border-bottom: 3px solid #000;
+        }
+        .boss-info { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 14px; }
+        .hp-bar-bg { width: 100%; height: 14px; background-color: #222d42; border-radius: 7px; overflow: hidden; border: 1px solid #000; }
+        .hp-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #ff1744, #b71c1c); width: 100%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(255, 23, 68, 0.8);
+        }
+        .combo-text {
+            color: #ffd600; font-style: italic; font-size: 14px; font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s;
+        }
+        .combo-text.show { opacity: 1; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .content-padding { padding: 30px; }
+        .section-title { color: var(--primary-dark); font-size: 22px; margin-bottom: 20px; text-align: center; font-weight: 800; }
+        
+        /* 优化后的视频跳转引导卡片 */
+        .video-banner {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+        .video-banner:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(229, 57, 53, 0.25);
+        }
+        .video-banner-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .video-title {
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-size: 15px;
+        }
+        .video-desc {
+            font-size: 13px;
+            color: #555;
+        }
+        .video-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(229, 57, 53, 0.3);
+            transition: background 0.2s;
+        }
+        .video-banner:hover .video-btn {
+            background: var(--primary-dark);
+        }
+
+        .panorama-img { width: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: 20px; display: block; min-height: 180px; background-color: var(--primary-light); object-fit: cover; }
+
+        /* 走心的结构化介绍区块 */
+        .feature-block {
+            text-align: left; background: #fff; padding: 15px; border-radius: 10px;
+            margin-bottom: 15px; border: 1px solid #eee;
+        }
+        .feature-title { font-weight: bold; color: var(--primary-dark); margin-bottom: 5px; font-size: 15px; }
+        .feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dashed #eee; }
+        .timer-badge { background-color: var(--primary-light); color: var(--primary-dark); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; }
+        .timer-badge.danger { background-color: #ffebee; color: var(--wrong-color); animation: pulse 1s infinite; }
+        
+        /* 题干与选项样式 */
+        .question-text { font-size: 18px; font-weight: 500; margin-bottom: 25px; line-height: 1.6; color: #34495e; }
+        .q-hl { 
+            font-weight: 800; color: #000; 
+            background: linear-gradient(120deg, rgba(229, 57, 53, 0.2) 0%, rgba(229, 57, 53, 0.2) 100%);
+            background-repeat: no-repeat; background-size: 100% 40%; background-position: 0 88%;
+            padding: 0 2px;
+        }
+
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background-color: #fff; border: 2px solid #eaeded; border-radius: var(--radius-md); padding: 16px 20px; font-size: 16px; color: var(--text-main); text-align: left; cursor: pointer; transition: all 0.2s ease; font-weight: 500;}
+        .option-btn:hover:not(:disabled) { border-color: var(--primary-color); background-color: var(--primary-light); transform: translateY(-2px); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; transform: none; }
+        .option-btn.correct { background-color: #e8f5e9; border-color: var(--correct-color); color: #1b5e20; font-weight: bold; }
+        .option-btn.wrong { background-color: #ffebee; border-color: var(--wrong-color); color: #b71c1c; }
+
+        /* 场外援助（刮刮乐） */
+        .hint-btn {
+            background: none; border: 1px dashed var(--primary-color); color: var(--primary-color);
+            padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; 
+            width: 100%; margin-top: 15px; transition: 0.2s; display: none;
+        }
+        .hint-btn:hover { background: var(--primary-light); }
+        .hint-img-container { display: none; margin-top: 15px; position: relative; border-radius: 8px; overflow: hidden; }
+        .hint-img { width: 100%; filter: blur(15px); transition: filter 0.3s; }
+        .hint-img.revealed { filter: blur(0); }
+        .hint-overlay-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 20px; pointer-events: none; }
+
+        /* 解析区 */
+        .feedback-card { display: none; margin-top: 25px; background-color: var(--card-bg); border: 2px solid var(--primary-light); padding: 20px; border-radius: var(--radius-md); position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.03); animation: slideUpFade 0.5s forwards; }
+        .feedback-card::before { content: ''; position: absolute; left: -2px; top: -2px; bottom: -2px; width: 6px; background-color: var(--primary-color); border-radius: 10px 0 0 10px; }
+        .feedback-card.show { display: block; }
+        .feedback-img { width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; }
+        
+        .highlight { color: var(--primary-color); font-weight: bold; background: var(--primary-light); padding: 2px 6px; border-radius: 4px; margin: 0 2px; }
+        .fact-text { font-size: 15px; color: #455a64; margin-bottom: 12px; line-height: 1.7; background-color: #f5f7fa; padding: 12px 15px; border-radius: 8px; }
+        .metaphor-text { font-size: 15px; color: #333; line-height: 1.7; padding: 0 5px; }
+        
+        .retry-warning { display: none; margin-top: 15px; padding: 10px; border-radius: 8px; background-color: #fff3e0; color: #e65100; font-size: 14px; font-weight: bold; text-align: center; }
+
+        /* 错题画廊 (通关复盘) */
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
+        .gallery-item { perspective: 1000px; cursor: pointer; height: 160px; }
+        .gallery-inner { width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; border-radius: 12px; box-shadow: var(--shadow-sm); }
+        .gallery-item:hover .gallery-inner { box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .gallery-item.flipped .gallery-inner { transform: rotateY(180deg); }
+        
+        .gallery-front, .gallery-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 12px; overflow: hidden; }
+        .gallery-front { background-size: cover; background-position: center; filter: grayscale(100%) brightness(0.7); transition: filter 0.3s; display: flex; align-items: center; justify-content: center; }
+        .gallery-front::after { content: '点击翻转 🔄'; color: white; background: rgba(229, 57, 53, 0.85); padding: 8px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .gallery-item.flipped .gallery-front { filter: grayscale(0%) brightness(1); } 
+        
+        .gallery-back { background-color: var(--primary-light); transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 2px solid var(--primary-color); }
+        .gallery-back-title { font-size: 13px; font-weight: bold; color: var(--primary-dark); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .gallery-back-desc { font-size: 12px; color: var(--text-main); line-height: 1.5; }
+
+        .primary-btn { width: 100%; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(229, 57, 53, 0.3); margin-top: 15px; }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(229, 57, 53, 0.4); }
+        
+        /* 次级按钮（重置关卡） */
+        .secondary-btn { background: #f1f3f5; color: #555; box-shadow: none; margin-top: 10px; font-size: 15px; padding: 14px;}
+        .secondary-btn:hover { background: #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transform: translateY(-1px); }
+
+        .hidden { display: none !important; }
+
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="vfx-layer"></div>
+
+    <div class="app-container" id="main-container">
+        <div class="rpg-header" id="rpg-header">
+            <div class="boss-info">
+                <span>⚓ 暗视野深海基地：霍乱弧菌大魔王</span>
+                <span class="combo-text" id="combo-text">Combo x3! 🔥</span>
+                <span>剩余HP: <span id="hp-text">11</span></span>
+            </div>
+            <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-bar"></div></div>
+        </div>
+
+        <div id="intro-screen" class="content-padding">
+            <h1 class="section-title">潜艇基地攻防战：霍乱弧菌</h1>
+
+            <a href="http://xhslink.com/o/393TcaJZHjT" class="video-banner" target="_blank">
+                <div class="video-banner-content">
+                    <span class="video-title">▶️ 建议先花3分钟看下这期【霍乱弧菌记忆宫殿电影】</span>
+                    <span class="video-desc">里面加了剧情和专属音效，看完再来刷题体验翻倍哦 ⸜(๑'ᵕ'๑)⸝⋆*</span>
+                </div>
+                <span class="video-btn">去小红书观看 ↗</span>
+            </a>
+
+            <img class="panorama-img" id="intro-panorama" src="https://img.cdn1.vip/i/6a0d9c5f2eadc_1779276895.webp" alt="霍乱弧菌全景图">
+
+            <div class="feature-block">
+                <div class="feature-title">📚 笨功夫攒的题库</div>
+                <div class="feature-desc">结合微生物大二期末核心考点及高频真题，深挖霍乱弧菌的核心生物学性状和独特的腹泻致病机制。搞定这11道真题，期末稳拿高分！ vig'ᴗ' hi</div>
+            </div>
+            <div class="feature-block">
+                <div class="feature-title">⚡️ 沉浸式心流引擎</div>
+                <div class="feature-desc">15秒限时强刺激，忘词了可以消耗 Combo 刮开视觉线索。用打游戏的方式，陪你把干瘪的文字变成肌肉记忆 ୧⍢⃝定</div>
+            </div>
+
+            <button class="primary-btn" onclick="startQuiz()" style="margin-top: 10px;">开启深海战火 ⚔️</button>
+        </div>
+
+        <div id="quiz-screen" class="content-padding hidden">
+            <div class="header-info">
+                <span style="font-weight: bold; color: var(--primary-color);">🎯 高频考点扫荡</span>
+                <div class="timer-badge" id="timer-badge">⏳ <span id="time-left">15</span>s</div>
+            </div>
+
+            <div class="question-text" id="question-text">题目加载中...</div>
+            <div class="options-container" id="options-container"></div>
+            
+            <button class="hint-btn" id="hint-btn" onclick="useHint()">🔍 消耗 1 Combo 刮开视觉线索</button>
+            <div class="hint-img-container" id="hint-container">
+                <img class="hint-img" id="hint-img" src="">
+                <div class="hint-overlay-text" id="hint-overlay">已刮开 (3秒后变暗)</div>
+            </div>
+
+            <div class="feedback-card" id="feedback-card">
+                <img id="feedback-img" class="feedback-img" src="">
+                <div class="fact-text" id="fact-text"></div>
+                <div class="metaphor-text" id="metaphor-text"></div>
+                <div class="retry-warning" id="retry-warning"></div>
+                <button class="primary-btn" id="next-btn" onclick="nextQuestion()">继续追击 ➡️</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="content-padding hidden">
+            <h1 class="section-title">🎉 基地魔王击杀完成</h1>
+            <p class="section-subtitle" id="gallery-subtitle" style="margin-bottom: 15px;">以下是你刚刚遗忘的灰暗碎片。点击图片，重新点亮视觉锚点并翻转复盘。</p>
+            
+            <div class="gallery-grid" id="wrong-gallery"></div>
+
+            <button class="primary-btn" onclick="goToNext()">🗺️ 开启下一战役</button>
+            <button class="primary-btn secondary-btn" onclick="restartQuiz()">🔄 重置当前关卡</button>
+
+            <p style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 20px;">
+                遗忘碎片已全部重铸。若想再次加深底层逻辑，可随时回顾配套视频解析。
+            </p>
+        </div>
+    </div>
+
+    <script>
+        try {
+            const CustomMedia = {
+                introImage: "https://img.cdn1.vip/i/6a0d9c5f2eadc_1779276895.webp", 
+                bgm: "",        
+                correct: "",    
+                wrong: "",      
+                fever: "",      
+                win: ""         
+            };
+
+            // 👁️ 霍乱弧菌·专属完全体视觉题库（已剔除旧第5题并依次应用专属解析图片）
+            const originalQuizData = [
+                {
+                    id: 0,
+                    question: "1. 关于霍乱弧菌的染色和形态叙述，下列哪项是<span class='q-hl'>错误</span>的？",
+                    options: ["A. 菌体短小，弯曲成弧形或逗点形", "B. 革兰染色为阴性", "C. 有菌毛和单鞭毛", "D. El Tor生物型具有坚固的芽胞", "E. 涂片镜检时可呈整齐的鱼群状排列"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：霍乱弧菌是<span class='highlight'>革兰阴性(G-)</span>、呈逗点状的无芽胞细菌，El Tor生物型也<span class='highlight'>绝不形成芽胞</span>。",
+                    metaphor: "🐳 视觉锚定：【中央锁定区】。仔细看深海中的潜艇群：全部呈现弯曲弯弯的**逗点状**，表面闪着代表革兰阴性的**猩红/粉红光**。潜艇外壳根本没有防御芽胞，千万别被科幻外观骗了！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d9bf067a3f_1779276784.webp" 
+                },
+                {
+                    id: 1,
+                    question: "2. 悬滴标本或粪便标本直接镜检时，霍乱弧菌在暗视野显微镜下的<span class='q-hl'>运动特点</span>是：",
+                    options: ["A. 呈周身鞭毛的缓慢游动", "B. 呈快速飞镖样、穿梭样运动", "C. 呈无规律的布朗运动", "D. 呈蛇行或旋转样运动", "E. 细菌由于无鞭毛而静止不动"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：霍乱弧菌凭借其<span class='highlight'>一端单鞭毛</span>，在悬滴观察时呈现出极其活泼的<span class='highlight'>“飞镖样”或“穿梭样”运动</span>。",
+                    metaphor: "🚀 视觉锚定：【战术编队区】。注意雷达扫描出的荧光弧线，单鞭毛就是潜艇尾部的螺旋桨。由于动力太猛，它们像一发发**极速发射的飞镖/穿梭机**，在漆黑的水滴里划出一道道红光。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d9bff4b87e_1779276799.webp"
+                },
+                {
+                    id: 2,
+                    question: "3. 霍乱弧菌的选择性增菌培养基通常为碱性蛋白胨水，这与它的哪项<span class='q-hl'>培养特性</span>相关？",
+                    options: ["A. 耐酸不耐碱，pH 8.8-9.0", "B. 耐碱不耐酸，pH 8.8-9.0", "C. 营养要求极高，必须加葡萄糖", "D. 必须在含3.5% NaCl的高盐中培养", "E. 专性厌氧环境才能生长"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：霍乱弧菌是强烈的<span class='highlight'>嗜碱性细菌</span>（适宜 pH 8.8-9.0），极度<span class='highlight'>对酸敏感</span>，因此临床常选用碱性蛋白胨水增菌。",
+                    metaphor: "🧪 视觉锚定：【左侧深海补给区】。瞧！左边有一个巨大的深海反应锅，蒸汽腾腾。锅上挂着显眼的测量表**【pH 8.8-9.0】**。它极其**耐碱不耐酸**，胃酸（强酸）就是它的天敌，所以必须喝大量水稀释胃酸才能闯关！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d9bffd2cbc_1779276799.webp"
+                },
+                {
+                    id: 3,
+                    question: "4. 下列关于氯化钠(NaCl)需求，能将霍乱弧菌与其他肠道致病弧菌（如副溶血性弧菌）<span class='q-hl'>区分开</span>的核心指标是：",
+                    options: ["A. 霍乱弧菌必须在3.5%的高盐培养基中才能生长", "B. 霍乱弧菌在0% NaCl（无盐）培养基中可以生长", "C. 霍乱弧菌可在任何浓度盐分中生长", "D. 副溶血性弧菌对盐分极度敏感，不能见盐", "E. 霍乱弧菌具有绝对的嗜盐性"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：霍乱弧菌的绝对核心指标是<span class='highlight'>无盐可长</span>（在 0% NaCl 培养基中生长），而副溶血性弧菌等其他肠道弧菌则具有<span class='highlight'>嗜盐性</span>。",
+                    metaphor: "⛔ 视觉锚定：【左侧禁忌水域】。补给区旁边竖着一块刺眼的警告牌：**【淡水区：严禁投入任何盐分！NO SALT EVER！】**。这是霍乱弧菌的骄傲——无盐可长。只要去到无盐淡水里，就能一把揪出霍乱弧菌！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d9bfde8e43_1779276797.webp" 
+                },
+                {
+                    id: 4,
+                    question: "5. 关于霍乱肠毒素(CT)的分子结构，下列叙述<span class='q-hl'>正确</span>的是：",
+                    options: ["A. 由 1 个 B 亚单位和 5 个 A 亚单位组成", "B. 为耐热的内毒素，本质是脂多糖", "C. 由 1 个 A 亚单位 and 5 个 B 亚单位组成", "D. 毒素的基因是由细菌染色体固有基因编码的", "E. A 亚单位负责与细胞受体特异性结合"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：霍乱肠毒素是致泻性最强的<span class='highlight'>不耐热外毒素</span>，结构呈典型的 <span class='highlight'>1A+5B 蛋白质复合体</span>。",
+                    metaphor: "💣 视觉锚定：【右侧机密武器库】。观察那枚名为“霍乱肠毒素”的重型鱼雷：外面由 **5个B亚单位组成的环形‘结合部’** 紧紧包裹，核心则是一枚 **1个A亚单位组成的‘毒性弹头’（1A+5B）**。这就是系统崩溃的万恶之源！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d9c0006239_1779276800.webp" 
+                },
+                {
+                    id: 5,
+                    question: "6. 霍乱弧菌在肠道发病时，其霍乱肠毒素与肠上皮细胞结合的<span class='q-hl'>特异性受体</span>是：",
+                    options: ["A. 糖蛋白受体", "B. GM1 神经节苷脂受体", "C. CD4 分子受体", "D. 乙酰胆碱受体", "E. 膜磷脂受体"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：霍乱肠毒素的 B 亚单位能特异性地结合肠黏膜上皮细胞表面的 <span class='highlight'>GM1 神经节苷脂受体</span>。",
+                    metaphor: "🔐 视觉锚定：【右侧吸附锁定区】。看鱼雷在基地大门接轨的场景：5个 B 亚单位化作强力磁铁，死死卡在肠黏膜细胞一扇名为 **【GM1】的感应闸门** 上。卡死之后，才把 A 亚单位弹头射入细胞内部！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d9c018da3e_1779276801.webp" 
+                },
+                {
+                    id: 6,
+                    question: "7. 极其重要的考点：霍乱弧菌到小肠后，其<span class='q-hl'>核心致病机制</span>是：",
+                    options: ["A. 侵入并破坏肠黏膜上皮细胞，造成严重的溃疡和出血", "B. 产生内毒素破坏血管，导致血便", "C. 黏附于黏膜表面不侵入细胞，依靠肠毒素激活腺苷酸环化酶", "D. 侵入血流引起败血症，导致多器官衰竭", "E. 进入肠黏膜下层大量繁殖并释放溶血素"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：霍乱弧菌是<span class='highlight'>非侵袭性细菌</span>，只黏附在肠上皮细胞表面繁殖，<span class='highlight'>绝不侵入肠上皮细胞、也不入血</span>，纯靠肠毒素致病。",
+                    metaphor: "🛑 视觉锚定：【吸附不击穿铁律】。在武器库的显眼位置，拉着一道加粗的**猩红警戒线**，上面写着：**【只黏附于表面，绝对不侵入肠粘膜上皮细胞！也不入血！】**。它就像吸附在城墙外的水蛭，只打冷枪，绝不拆墙，所以粪便镜检没有白细胞！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d9c02df94b_1779276802.webp" 
+                },
+                {
+                    id: 7,
+                    question: "8. 霍乱肠毒素 A 亚单位进入肠上皮细胞内发挥毒性作用，直接导致细胞内哪种<span class='q-hl'>信号物质爆表变多</span>？",
+                    options: ["A. cGMP 浓度持续升高", "B. cAMP 浓度异常持续升高", "C. ATP 大量堆积", "D. Na+ 离子浓度急剧下降", "E. 蛋白质合成瞬间停止"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：A 亚单位活化后持续激活<span class='highlight'>腺苷酸环化酶(AC)</span>，导致细胞内 <span class='highlight'>cAMP 异常持续升高</span>，引发海量水样腹泻。",
+                    metaphor: "🚨 视觉锚定：【右侧系统崩溃区】。A 弹头进入内部后，疯狂砸向控制台的‘腺苷酸环化酶’电闸。警报拉响，控制面板上的 **【cAMP 压力表】指针瞬间冲破红线、彻底爆表（cAMP爆表）**！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d9c01b6a00_1779276801.webp" 
+                },
+                {
+                    id: 8,
+                    question: "9. 典型霍乱患者发病后，最先出现的常见症状及<span class='q-hl'>粪便特征</span>是：",
+                    options: ["A. 畏寒高热，继之排出果酱样便", "B. 剧烈腹泻继之呕吐，排出海量米泔水样便", "C. 脐周绞痛，继之排出黏液脓血便", "D. 频繁呕吐，不腹泻，无明显脱水", "E. 腹部绞痛，继之排出柏油样黑便"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：典型霍乱发病极急，<span class='highlight'>先剧烈腹泻继而呕吐</span>（无痛、无热），排出大量洗肉水样或特殊的<span class='highlight'>“米泔水样”粪便</span>。",
+                    metaphor: "🌊 视觉锚定：【排污管狂喷区】。cAMP 爆表的直接后果——两根巨大的排污管彻底失控，正轰隆隆地向外**狂喷白花花的‘米泔水样’液体**。肠液极度过度分泌，超过重吸收极限，患者被瞬间抽干水分！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d9c0470398_1779276804.webp" 
+                },
+                {
+                    id: 9,
+                    question: "10. 针对引起霍乱暴发流行的主要血清群，以及病后的<span class='q-hl'>免疫特性</span>，描述正确的是：",
+                    options: ["A. 主要致病群为 O157 群", "B. 病后免疫力极其短暂，易反复感染", "C. 引起暴发流行的是 O1 群和 O139 群，两者间无交叉保护", "D. 人类对其有很强的先天性自然免疫力", "E. O1群感染后能完美预防 O139 群的袭击"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：引起霍乱世界大流行的主要有 <span class='highlight'>O1 群和 O139 群</span>。病后可获牢固免疫力，但两群之间<span class='highlight'>无交叉保护作用</span>。",
+                    metaphor: "🛡️ 视觉锚定：【右下防御盾盲区】。看基地右下角站着的两个守卫：一个手持 **‘O1’红色巨盾**，另一个手持 **‘O139’巨盾**。他们之间互不认账，毫无交叉。这意味着你就算拥有 O1 的巨盾，面对 O139 的袭击依然形同虚设！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d9c030ca1d_1779276803.webp" 
+                },
+                {
+                    id: 10,
+                    question: "11. 抢救脱水和危重霍乱患者，生死攸关的<span class='q-hl'>最关键、首要的治疗措施</span>地：",
+                    options: ["A. 立即给予大剂量强效静脉抗生素联合杀菌", "B. 口服大剂量止泻药限制水分丢失", "C. 及时、快速、足量地静脉补充液体和电解质", "D. 肌肉注射霍乱抗血清进行特异性中和", "E. 实施绝对严格的物理降温治疗"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：霍乱致死的主要原因是剧烈脱水和电解质紊乱。治疗<span class='highlight'>最核心、最关键的措施是及时静脉补液</span>，抗生素仅为辅助。",
+                    metaphor: "🔧 视觉锚定：【基地紧急注水线】。面对狂喷的排污管，基地眼看就要干涸报废。工程师抛下抗生素药箱，一把拉开**【静脉补液·紧急注水管线】**，源源不断地向基地内回灌电解质液体。把水补上，稳住生命，才是活命的真理！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0d9c049ed7a_1779276804.webp" 
+                }
+            ];
+
+            let workingQueue = []; 
+            let currentIndex = 0;
+            const totalHitsToWin = originalQuizData.length;
+            let hitsRemaining = totalHitsToWin;
+            
+            let combo = 0;
+            let timerInterval;
+            let timeLeft = 15;
+            let wrongHistory = new Set(); 
+
+            let audioCtx = null;
+            let bgmInterval = null;
+            let isBgmPlaying = false;
+            let customBgmAudio = null;
+
+            function initAudio() { 
+                if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+                if(audioCtx.state === 'suspended') { audioCtx.resume(); } 
+            }
+
+            function startBGM() {
+                if(isBgmPlaying) return;
+                isBgmPlaying = true;
+                if (CustomMedia.bgm) {
+                    if (!customBgmAudio) { customBgmAudio = new Audio(CustomMedia.bgm); customBgmAudio.loop = true; }
+                    customBgmAudio.play().catch(e => console.log(e));
+                    return;
+                }
+                if (!audioCtx) return;
+                let tick = 0;
+                bgmInterval = setInterval(() => {
+                    if(audioCtx.state === 'suspended') return;
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    if(tick % 4 === 0) { 
+                        osc.frequency.setValueAtTime(100, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.12); gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    } else { 
+                        osc.frequency.setValueAtTime(140, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.06); gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                    }
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+                    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.12);
+                    tick++;
+                }, 700); 
+            }
+
+            function stopBGM() {
+                isBgmPlaying = false;
+                if (CustomMedia.bgm && customBgmAudio) { customBgmAudio.pause(); customBgmAudio.currentTime = 0; } 
+                else { clearInterval(bgmInterval); }
+            }
+
+            function playTone(type) {
+                if (type === 'correct' && CustomMedia.correct) { new Audio(CustomMedia.correct).play(); return; }
+                if (type === 'wrong' && CustomMedia.wrong) { new Audio(CustomMedia.wrong).play(); return; }
+                if (type === 'fever' && CustomMedia.fever) { new Audio(CustomMedia.fever).play(); return; }
+                if (type === 'win' && CustomMedia.win) { new Audio(CustomMedia.win).play(); return; }
+
+                if(!audioCtx) return;
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                if(type === 'correct') { 
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                } else if (type === 'wrong') { 
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.4, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                } else if (type === 'fever') { 
+                    osc.type = 'square'; osc.frequency.setValueAtTime(1200, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(2400, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4); osc.start(); osc.stop(audioCtx.currentTime + 0.4); 
+                } else if (type === 'win') { 
+                    const freqs = [440, 554, 659, 880, 1108]; 
+                    freqs.forEach((f, i) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.setValueAtTime(0, audioCtx.currentTime + i*0.1); g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + i*0.1 + 0.05); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i*0.1 + 1.0); o.start(audioCtx.currentTime + i*0.1); o.stop(audioCtx.currentTime + i*0.1 + 1.0); }); 
+                }
+            }
+
+            let particleInterval = null;
+            const vfxLayer = document.getElementById('vfx-layer');
+
+            function startFeverVFX() {
+                if(particleInterval) return;
+                particleInterval = setInterval(() => {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+                    p.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                    vfxLayer.appendChild(p);
+                    setTimeout(() => p.remove(), 3500);
+                }, 150);
+            }
+
+            function stopFeverVFX() { clearInterval(particleInterval); particleInterval = null; vfxLayer.innerHTML = ''; }
+
+            function triggerWinVFX() {
+                for(let i=0; i<50; i++) {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = 50 + (Math.random() * 20 - 10) + '%'; p.style.top = 50 + (Math.random() * 20 - 10) + '%';
+                    p.style.width = p.style.height = (Math.random() * 6 + 3) + 'px';
+                    p.style.backgroundColor = `hsl(${Math.random() * 20}, 100%, 60%)`; 
+                    p.style.transform = `translate(${Math.random()*200-100}px, ${Math.random()*200-100}px)`;
+                    p.style.animation = 'floatUp 2s cubic-bezier(0.25, 1, 0.5, 1) forwards';
+                    vfxLayer.appendChild(p);
+                }
+                setTimeout(() => { vfxLayer.innerHTML = ''; }, 2500);
+            }
+
+            const introScreen = document.getElementById('intro-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const endScreen = document.getElementById('end-screen');
+            const mainContainer = document.getElementById('main-container');
+            const rpgHeader = document.getElementById('rpg-header');
+            const hpBar = document.getElementById('hp-bar');
+            const hpText = document.getElementById('hp-text');
+            const comboText = document.getElementById('combo-text');
+            const timeLeftSpan = document.getElementById('time-left');
+            const optionsContainer = document.getElementById('options-container');
+            const hintBtn = document.getElementById('hint-btn');
+            const hintContainer = document.getElementById('hint-container');
+            const hintImg = document.getElementById('hint-img');
+            const feedbackCard = document.getElementById('feedback-card');
+            const retryWarning = document.getElementById('retry-warning');
+            const wrongGallery = document.getElementById('wrong-gallery');
+
+            window.startQuiz = function() {
+                initAudio(); startBGM(); 
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+                
+                updateUI();
+                introScreen.classList.add('hidden'); endScreen.classList.add('hidden'); quizScreen.classList.remove('hidden');
+                rpgHeader.style.display = 'flex';
+                loadQuestion();
+            };
+
+            window.restartQuiz = function() {
+                clearInterval(timerInterval); stopBGM(); stopFeverVFX();
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+
+                hpBar.style.width = '100%'; hpText.innerText = hitsRemaining;
+                comboText.classList.remove('show'); document.body.classList.remove('fever-mode');
+                feedbackCard.classList.remove('show'); hintContainer.style.display = 'none'; hintBtn.style.display = 'none';
+                
+                endScreen.classList.add('hidden'); quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                introScreen.classList.remove('hidden');
+            };
+
+            window.goToNext = function() {
+                window.location.href = ""; // 下一个战役跳转预留
+            };
+
+            function updateUI() {
+                hpText.innerText = hitsRemaining;
+                hpBar.style.width = `${(hitsRemaining / totalHitsToWin) * 100}%`;
+                if(combo > 0) {
+                    comboText.innerText = `Combo x${combo}! 🔥`; comboText.classList.add('show');
+                    if(combo >= 3) { document.body.classList.add('fever-mode'); startFeverVFX(); }
+                } else {
+                    comboText.classList.remove('show'); document.body.classList.remove('fever-mode'); stopFeverVFX();
+                }
+            }
+
+            function startTimer() {
+                clearInterval(timerInterval); timeLeft = 15; timeLeftSpan.innerText = timeLeft;
+                document.getElementById('timer-badge').classList.remove('danger');
+                timerInterval = setInterval(() => {
+                    timeLeft--; timeLeftSpan.innerText = timeLeft;
+                    if(timeLeft <= 5) document.getElementById('timer-badge').classList.add('danger');
+                    if(timeLeft <= 0) { clearInterval(timerInterval); handleTimeout(); }
+                }, 1000);
+            }
+
+            function loadQuestion() {
+                feedbackCard.classList.remove('show'); retryWarning.style.display = 'none'; hintContainer.style.display = 'none';
+                const currentQ = workingQueue[currentIndex];
+                document.getElementById('question-text').innerHTML = currentQ.question;
+                
+                if (combo >= 1 && currentQ.imageUrl) {
+                    hintBtn.style.display = 'block'; hintBtn.innerText = `🔍 消耗 1 Combo 刮开视觉线索 (当前 x${combo})`;
+                } else {
+                    hintBtn.style.display = 'none';
+                }
+
+                optionsContainer.innerHTML = '';
+                currentQ.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button'); btn.innerText = opt; btn.classList.add('option-btn');
+                    btn.onclick = () => window.resolveAnswer(idx, btn);
+                    optionsContainer.appendChild(btn);
+                });
+                startTimer();
+            }
+
+            window.useHint = function() {
+                if (combo < 1) return;
+                combo--; updateUI();
+                hintBtn.style.display = 'none'; hintContainer.style.display = 'block';
+                hintImg.src = workingQueue[currentIndex].imageUrl; hintImg.classList.add('revealed');
+                setTimeout(() => { hintImg.classList.remove('revealed'); }, 3000);
+            };
+
+            function handleTimeout() {
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(btn => btn.disabled = true);
+                optionsButtons[currentQ.correctAnswer].classList.add('correct');
+                processResult(false, currentQ);
+            }
+
+            window.resolveAnswer = function(idx, btn) {
+                clearInterval(timerInterval);
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(b => b.disabled = true); hintBtn.style.display = 'none';
+
+                const isCorrect = (idx === currentQ.correctAnswer);
+                if (isCorrect) btn.classList.add('correct');
+                else { btn.classList.add('wrong'); optionsButtons[currentQ.correctAnswer].classList.add('correct'); }
+                processResult(isCorrect, currentQ);
+            };
+
+            function processResult(isCorrect, q) {
+                let msg = "";
+                if (isCorrect) {
+                    hitsRemaining--; combo++; playTone(combo >= 3 ? 'fever' : 'correct');
+                    msg = "✅ 击杀成功！大魔王受到重创！";
+                    retryWarning.style.color = "#2e7d32"; retryWarning.style.background = "#e8f5e9";
+                } else {
+                    combo = 0; wrongHistory.add(q.id); 
+                    mainContainer.classList.add('shake'); setTimeout(()=>mainContainer.classList.remove('shake'), 400);
+                    workingQueue.push(q); playTone('wrong');
+                    msg = "❌ 怪物已重生至队伍末尾，请准备再次追击！";
+                    retryWarning.style.color = "#c62828"; retryWarning.style.background = "#ffebee";
+                }
+
+                updateUI();
+                document.getElementById('fact-text').innerHTML = q.fact;
+                document.getElementById('metaphor-text').innerHTML = q.metaphor;
+                const fbImg = document.getElementById('feedback-img');
+                if (q.imageUrl) { fbImg.src = q.imageUrl; fbImg.style.display = 'block'; } else { fbImg.style.display = 'none'; }
+                
+                retryWarning.innerText = msg; retryWarning.style.display = 'block';
+                feedbackCard.classList.add('show');
+            }
+
+            window.nextQuestion = function() {
+                currentIndex++;
+                if (hitsRemaining > 0 && currentIndex < workingQueue.length) { loadQuestion(); } 
+                else {
+                    playTone('win'); stopBGM(); stopFeverVFX(); triggerWinVFX(); document.body.classList.remove('fever-mode');
+                    setTimeout(() => {
+                        quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                        generateGallery(); endScreen.classList.remove('hidden');
+                    }, 400);
+                }
+            };
+
+            function generateGallery() {
+                wrongGallery.innerHTML = ''; const subtitle = document.getElementById('gallery-subtitle');
+                if (wrongHistory.size === 0) {
+                    subtitle.innerHTML = "<span style='color: var(--correct-color); font-weight: bold;'>🌟 完美通关！你的视觉记忆无懈可击，深海基地地图已彻底点亮！</span>";
+                    return;
+                }
+                subtitle.innerHTML = `以下是你刚刚遗忘的 <b style="color:var(--primary-color)">${wrongHistory.size}</b> 块灰暗碎片。点击图片，重新点亮视觉锚点并翻转复盘。`;
+                
+                wrongHistory.forEach(id => {
+                    const q = originalQuizData.find(item => item.id === id);
+                    if (!q) return;
+                    const card = document.createElement('div'); card.className = 'gallery-item';
+                    const displayImg = CustomMedia.introImage; 
+                    card.innerHTML = `
+                        <div class="gallery-inner">
+                            <div class="gallery-front" style="background-image: url('${q.imageUrl || displayImg}')"></div>
+                            <div class="gallery-back">
+                                <div class="gallery-back-title">${q.question.replace(/<[^>]+>/g, '').substring(3, 25)}...</div>
+                                <div class="gallery-back-desc">${q.metaphor.replace(/<[^>]+>/g, '')}</div>
+                            </div>
+                        </div>
+                    `;
+                    card.onclick = function() { this.classList.toggle('flipped'); };
+                    wrongGallery.appendChild(card);
+                });
+            }
+        } catch (error) { alert("代码引擎异常: " + error.message); }
+    </script>
+</body>
+</html>
