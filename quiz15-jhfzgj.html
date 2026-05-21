@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医小晨 - 结核分枝杆菌 沉浸心流版</title>
+    <style>
+        :root {
+            --primary-color: #d32f2f; 
+            --primary-light: #ffebee;
+            --primary-dark: #b71c1c;
+            --bg-color: #f9f5f0; 
+            --card-bg: #ffffff;
+            --correct-color: #388e3c;
+            --wrong-color: #d32f2f;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-lg: 0 15px 35px rgba(211, 47, 47, 0.15);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s;
+            overflow-x: hidden;
+        }
+
+        body.fever-mode {
+            background-color: #2a0808;
+            animation: feverPulse 2s infinite alternate;
+        }
+        @keyframes feverPulse {
+            0% { box-shadow: inset 0 0 50px rgba(211, 47, 47, 0.3); }
+            100% { box-shadow: inset 0 0 150px rgba(211, 47, 47, 0.7); }
+        }
+
+        #vfx-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 1; overflow: hidden;
+        }
+        .particle {
+            position: absolute; background: rgba(244, 67, 54, 0.8);
+            border-radius: 50%; animation: floatUp linear forwards;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        .app-container {
+            max-width: 600px; width: 100%; background-color: var(--card-bg);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+            overflow: hidden; position: relative; z-index: 10;
+        }
+
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        .rpg-header {
+            background-color: #251515; padding: 15px 20px; display: none;
+            flex-direction: column; gap: 8px; border-bottom: 3px solid #000;
+        }
+        .boss-info { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 14px; }
+        .hp-bar-bg { width: 100%; height: 14px; background-color: #523838; border-radius: 7px; overflow: hidden; border: 1px solid #000; }
+        .hp-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #f44336, #b71c1c); width: 100%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(244, 67, 54, 0.8);
+        }
+        .combo-text {
+            color: #ffeb3b; font-style: italic; font-size: 14px; font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s;
+        }
+        .combo-text.show { opacity: 1; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .content-padding { padding: 30px; }
+        .section-title { color: var(--primary-dark); font-size: 22px; margin-bottom: 20px; text-align: center; font-weight: 800; }
+        
+        .video-banner {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+        .video-banner:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(211, 47, 47, 0.25);
+        }
+        .video-banner-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .video-title {
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-size: 15px;
+        }
+        .video-desc {
+            font-size: 13px;
+            color: #555;
+        }
+        .video-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(211, 47, 47, 0.3);
+            transition: background 0.2s;
+        }
+
+        .panorama-img { width: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: 20px; display: block; min-height: 180px; background-color: var(--primary-light); object-fit: cover; }
+
+        .feature-block {
+            text-align: left; background: #fff; padding: 15px; border-radius: 10px;
+            margin-bottom: 15px; border: 1px solid #eee;
+        }
+        .feature-title { font-weight: bold; color: var(--primary-dark); margin-bottom: 5px; font-size: 15px; }
+        .feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dashed #eee; }
+        .timer-badge { background-color: var(--primary-light); color: var(--primary-dark); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; }
+        .timer-badge.danger { background-color: #fde8e8; color: var(--wrong-color); animation: pulse 1s infinite; }
+        
+        .question-text { font-size: 18px; font-weight: 500; margin-bottom: 25px; line-height: 1.6; color: #34495e; }
+        .q-hl { 
+            font-weight: 800; color: #000; 
+            background: linear-gradient(120deg, rgba(211, 47, 47, 0.2) 0%, rgba(211, 47, 47, 0.2) 100%);
+            background-repeat: no-repeat; background-size: 100% 40%; background-position: 0 88%;
+            padding: 0 2px;
+        }
+
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background-color: #fff; border: 2px solid #eaeded; border-radius: var(--radius-md); padding: 16px 20px; font-size: 16px; color: var(--text-main); text-align: left; cursor: pointer; transition: all 0.2s ease; font-weight: 500;}
+        .option-btn:hover:not(:disabled) { border-color: var(--primary-color); background-color: var(--primary-light); transform: translateY(-2px); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; transform: none; }
+        .option-btn.correct { background-color: #e8f5e9; border-color: var(--correct-color); color: #1b5e20; font-weight: bold; }
+        .option-btn.wrong { background-color: #ffebee; border-color: var(--wrong-color); color: #b71c1c; }
+
+        .hint-btn {
+            background: none; border: 1px dashed var(--primary-color); color: var(--primary-color);
+            padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; 
+            width: 100%; margin-top: 15px; transition: 0.2s; display: none;
+        }
+        .hint-btn:hover { background: var(--primary-light); }
+        .hint-img-container { display: none; margin-top: 15px; position: relative; border-radius: 8px; overflow: hidden; }
+        .hint-img { width: 100%; filter: blur(15px); transition: filter 0.3s; }
+        .hint-img.revealed { filter: blur(0); }
+        .hint-overlay-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 20px; pointer-events: none; }
+
+        .feedback-card { display: none; margin-top: 25px; background-color: var(--card-bg); border: 2px solid var(--primary-light); padding: 20px; border-radius: var(--radius-md); position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.03); animation: slideUpFade 0.5s forwards; }
+        .feedback-card::before { content: ''; position: absolute; left: -2px; top: -2px; bottom: -2px; width: 6px; background-color: var(--primary-color); border-radius: 10px 0 0 10px; }
+        .feedback-card.show { display: block; }
+        .feedback-img { width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; }
+        
+        .highlight { color: var(--primary-color); font-weight: bold; background: var(--primary-light); padding: 2px 6px; border-radius: 4px; margin: 0 2px; }
+        .fact-text { font-size: 15px; color: #455a64; margin-bottom: 12px; line-height: 1.7; background-color: #f5f7fa; padding: 12px 15px; border-radius: 8px; }
+        .metaphor-text { font-size: 15px; color: #333; line-height: 1.7; padding: 0 5px; }
+        
+        .retry-warning { display: none; margin-top: 15px; padding: 10px; border-radius: 8px; background-color: #fff3e0; color: #e65100; font-size: 14px; font-weight: bold; text-align: center; }
+
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
+        .gallery-item { perspective: 1000px; cursor: pointer; height: 160px; }
+        .gallery-inner { width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; border-radius: 12px; box-shadow: var(--shadow-sm); }
+        .gallery-item:hover .gallery-inner { box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .gallery-item.flipped .gallery-inner { transform: rotateY(180deg); }
+        
+        .gallery-front, .gallery-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 12px; overflow: hidden; }
+        .gallery-front { background-size: cover; background-position: center; filter: grayscale(100%) brightness(0.7); transition: filter 0.3s; display: flex; align-items: center; justify-content: center; }
+        .gallery-front::after { content: '点击翻转 🔄'; color: white; background: rgba(211, 47, 47, 0.85); padding: 8px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .gallery-item.flipped .gallery-front { filter: grayscale(0%) brightness(1); } 
+        
+        .gallery-back { background-color: var(--primary-light); transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 2px solid var(--primary-color); }
+        .gallery-back-title { font-size: 13px; font-weight: bold; color: var(--primary-dark); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .gallery-back-desc { font-size: 12px; color: var(--text-main); line-height: 1.5; }
+
+        .primary-btn { width: 100%; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3); margin-top: 15px; position: relative; z-index: 20; }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(211, 47, 47, 0.4); }
+        
+        .secondary-btn { background: #f1f3f5; color: #555; box-shadow: none; margin-top: 10px; font-size: 15px; padding: 14px;}
+        .secondary-btn:hover { background: #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transform: translateY(-1px); }
+
+        .hidden { display: none !important; }
+
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div class="app-container" id="main-container">
+        <div class="rpg-header" id="rpg-header">
+            <div class="boss-info">
+                <span>👑 结核分枝杆菌蜡像魔王</span>
+                <span class="combo-text" id="combo-text">Combo x3! 🔥</span>
+                <span>剩余HP: <span id="hp-text">13</span></span>
+            </div>
+            <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-bar"></div></div>
+        </div>
+
+        <div id="intro-screen" class="content-padding">
+            <h1 class="section-title">🏛️ 赤色蜡像馆攻防战：结核分枝杆菌</h1>
+
+            <a href="http://xhslink.com/o/6bnOiRc7JF2" class="video-banner" target="_blank">
+                <div class="video-banner-content">
+                    <span class="video-title">▶️ 建议先花3分钟看下这期【结核杆菌赤色档案馆电影】</span>
+                    <span class="video-desc">满屋血色迷雾与分枝红烛，看完视频后刷题可以秒杀考点哦 ⸜(๑'ᵕ'๑)⸝⋆*</span>
+                </div>
+                <span class="video-btn">去小红书观看 ↗</span>
+            </a>
+
+            <img class="panorama-img" id="intro-panorama" src="https://img.cdn1.vip/i/6a0eae2817899_1779346984.webp" alt="结核杆菌全景图">
+
+            <div class="feature-block">
+                <div class="feature-title">📚 跨题库核心扫荡</div>
+                <div class="feature-desc">结合了原Word及医学微生物学PDF的高频真题，将抗酸染色、PPD试验及卡介苗预防等期末、执医最容易设坑的13个经典考点进行立体解构！</div>
+            </div>
+            <div class="feature-block">
+                <div class="feature-title">⚡️ 视觉流派心流引擎</div>
+                <div class="feature-desc">15秒倒计时强刺激，遗忘时可以消耗 Combo 刮开档案馆中的视觉线索，将干瘪死板的医学考点重铸为场景肌肉记忆 ୧⍢⃝୨</div>
+            </div>
+
+            <button class="primary-btn" id="start-quiz-btn" onclick="window.startQuiz(); return false;" style="margin-top: 10px;">开启战火洗礼 ⚔️</button>
+        </div>
+
+        <div id="quiz-screen" class="content-padding hidden">
+            <div class="header-info">
+                <span style="font-weight: bold; color: var(--primary-color);">🎯 高频考点扫荡</span>
+                <div class="timer-badge" id="timer-badge">⏳ <span id="time-left">15</span>s</div>
+            </div>
+
+            <div class="question-text" id="question-text">题目加载中...</div>
+            <div class="options-container" id="options-container"></div>
+            
+            <button class="hint-btn" id="hint-btn" onclick="useHint()">🔍 消耗 1 Combo 刮开视觉线索</button>
+            <div class="hint-img-container" id="hint-container">
+                <img class="hint-img" id="hint-img" src="">
+                <div class="hint-overlay-text" id="hint-overlay">已刮开 (3秒后变暗)</div>
+            </div>
+
+            <div class="feedback-card" id="feedback-card">
+                <img id="feedback-img" class="feedback-img" src="">
+                <div class="fact-text" id="fact-text"></div>
+                <div class="metaphor-text" id="metaphor-text"></div>
+                <div class="retry-warning" id="retry-warning"></div>
+                <button class="primary-btn" id="next-btn" onclick="nextQuestion()">继续追击 ➡️</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="content-padding hidden">
+            <h1 class="section-title">🎉 档案馆魔王击杀完成</h1>
+            <p class="section-subtitle" id="gallery-subtitle" style="margin-bottom: 15px;">以下是你刚刚在密室中遗忘的灰暗碎片。点击图片，重新点亮视觉锚点并翻转复盘。</p>
+            
+            <div class="gallery-grid" id="wrong-gallery"></div>
+
+            <button class="primary-btn" onclick="goToNext()">🗺️ 开启下一战役</button>
+            <button class="primary-btn secondary-btn" onclick="restartQuiz()">🔄 重置当前关卡</button>
+
+            <p style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 20px;">
+                遗忘碎片已全部重铸。若想再次加深底层逻辑，可随时回顾配套视频解析。
+            </p>
+        </div>
+    </div>
+
+    <div id="vfx-layer"></div>
+
+    <script>
+        // 全局核心数组，采用强隔离运行保护
+        let originalQuizData = [];
+
+        try {
+            const CustomMedia = {
+                introImage: "https://img.cdn1.vip/i/6a0eae2817899_1779346984.webp", 
+                bgm: "",        
+                correct: "",    
+                wrong: "",      
+                fever: "",      
+                win: ""         
+            };
+
+            originalQuizData = [
+                {
+                    id: 0,
+                    question: "1. 结核分枝杆菌<span class='q-hl'>形态学诊断</span>最常用的染色方法是：",
+                    options: ["A. 革兰染色", "B. 抗酸染色", "C. 美兰染色", "D. 镀银染色", "E. 棉兰染色"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：结核分枝杆菌由于细胞壁含大量脂质，一般不易着色，最常用的是<span class='highlight'>抗酸染色法（齐-尼氏染色）</span>，染色后菌体呈红色。",
+                    metaphor: "🏛️ 视觉锚定：推开厚重的档案馆大门，映入眼帘的是满屋子挥之不去的<span class='highlight'>赤红色雾气</span>！这就是典型的抗酸染色，提示你只要在这里见到的细菌，全部被染成红色！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae2be6ecc_1779346987.webp" 
+                },
+                {
+                    id: 1,
+                    question: "2. 结核分枝杆菌化学组成<span class='q-hl'>最显著的特点</span>是含有大量的：",
+                    options: ["A. 蛋白质", "B. 脂类", "C. 多糖", "D. RNA", "E. 磷壁酸"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：结核分枝杆菌细胞壁中含有大量的<span class='highlight'>脂类（如分枝菌酸）</span>，占干重的60%左右，与其抗酸性、抵抗力及致病性密切相关。",
+                    metaphor: "🧱 视觉锚定：走向中央展台。中央矗立着一捆捆粗大的红烛，<span class='highlight'>蜡烛的材质本身就是“蜡质、脂类”</span>，这完美隐喻了它那层坚固、肥厚、富含脂质的细胞壁！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae2a0115a_1779346986.webp"
+                },
+                {
+                    id: 2,
+                    question: "3. 下列哪项<span class='q-hl'>不属于</span>分枝杆菌的生物学特性？",
+                    options: ["A. 生长慢并有分枝生长的趋势", "B. 抗酸染色阳性", "C. 专性厌氧", "D. 营养要求高", "E. 毒力和耐药性均可发生变异"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：结核分枝杆菌是<span class='highlight'>专性需氧菌</span>，绝非厌氧。它生长缓慢、营养要求高、抗酸阳性且易发生变异。",
+                    metaphor: "🌬️ 视觉锚定：抬头看右侧走廊上大开的<span class='highlight'>天窗</span>，狂风与蒸汽不断涌入。这说明它极度渴望新鲜空气，是<span class='highlight'>专性需氧</span>的绝对信徒，关在密闭缺氧的地方它根本活不下去！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae2abf723_1779346986.webp"
+                },
+                {
+                    id: 3,
+                    question: "4. 判断肺结核<span class='q-hl'>具有传染性</span>最主要的依据是：",
+                    options: ["A. 血沉增快", "B. 胸部X线片显示空洞性病变", "C. 结核菌素试验阳性", "D. 痰涂片找到抗酸杆菌", "E. 反复痰中带血"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：排菌是结核病具有传染性的标志。在<span class='highlight'>痰涂片中找到抗酸杆菌</span>说明患者正在向外排菌，是判断传染性最主要、最直接的依据。",
+                    metaphor: "🔬 视觉锚定：回想全局的赤红雾气。患者一口痰喷出，在显微镜下直接抓到了<span class='highlight'>亮红色的分枝红烛碎片（抗酸杆菌）</span>，这就拿到了它向外扩散、具有传染性确凿的抓捕铁证！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae2c45713_1779346988.webp" 
+                },
+                {
+                    id: 4,
+                    question: "5. 结核分枝杆菌的致病物质不产生内、外毒素，其毒力主要与<span class='q-hl'>菌体成分</span>有关，其中能<span class='highlight'>抑制白细胞游走并引起慢性肉芽肿</span>的成分是：",
+                    options: ["A. 蜡质D", "B. 磷脂", "C. 索状因子", "D. 硫酸脑苷脂", "E. 结核蛋白"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：<span class='highlight'>索状因子</span>是结核分枝杆菌的核心毒力因子，能使细菌在液体培养基中呈索状紧密排列，在体内能破坏线粒体、抑制白细胞游走，引发慢性肉芽肿。",
+                    metaphor: "⛓️ 视觉锚定：注意看中央展台那一捆分枝红烛，外面被一圈圈<span class='highlight'>粗暴的紫色麻绳死死勒住（索状排列）</span>。这根绳索不仅束缚了红烛，更形象地**束缚并扣留了白细胞**，让它们无法游走，被迫堆积形成肉芽肿！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae2c945eb_1779346988.webp" 
+                },
+                {
+                    id: 5,
+                    question: "6. 继发性肺结核（多见于成人）最典型的<span class='q-hl'>病理转归特点</span>是极易发生：",
+                    options: ["A. 渗出性病变迅速痊愈", "B. 钙化与纤维化", "C. 经淋巴管扩散到肺门淋巴结", "D. 干酪样坏死与空洞形成", "E. 全身粟粒性结核"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：继发性肺结核多为内源性复发，机体已有免疫力，病变局限，但由于强烈的迟发型超敏反应，病灶极易发生<span class='highlight'>干酪样坏死</span>与<span class='highlight'>空洞</span>。",
+                    metaphor: "🪵 视觉锚定：把视线移向中央展台后方。那里伫立着一尊**胸口被炸开一个黑色大破洞的腐朽蜡像**，破洞边缘像发黄变质的干酪。这尊“腐朽蜡像”就是成人继发性结核<span class='highlight'>干酪样坏死与空洞</span>的终极视觉写照！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae2d3704a_1779346989.webp" 
+                },
+                {
+                    id: 6,
+                    question: "7. 结核分枝杆菌在常规分离培养时，<span class='q-hl'>典型的菌落形态</span>表现为：",
+                    options: ["A. 表面光滑、湿润、灰白色菌落", "B. 表面粗糙、干燥、呈菜花状菌落", "C. 形成微小、透明的针尖样菌落", "D. 产生水溶性青绿色色素菌落", "E. 溶血圈围绕的透明菌落"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：结核分枝杆菌属于<span class='highlight'>粗糙型（R型）菌落</span>，由于胞壁含大量脂质互不分散，在固体培养基上生长时表面粗糙、干燥、呈乳黄色菜花状。",
+                    metaphor: "🥦 视觉锚定：转头看向档案馆的左侧温室。一排排金属托盘里盛放着**干巴巴、硬邦邦的白色菜花**！这就是它那傲娇的<span class='highlight'>R型菜花状典型菌落</span>，摸上去极其粗糙干燥。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae3814512_1779347000.webp" 
+                },
+                {
+                    id: 7,
+                    question: "8. 结核分枝杆菌常用的<span class='q-hl'>选择性固体培养基</span>是：",
+                    options: ["A. 沙保培养基", "B. 巧克力色培养基", "C. 庖肉培养基", "D. 改良罗氏培养基", "E. 亚碲酸钾培养基"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：结核分枝杆菌分离培养常用<span class='highlight'>改良罗氏（Lowenstein-Jensen）培养基</span>，其核心成分含蛋黄、甘油、马铃薯粉及用于抑制杂菌的孔雀绿。",
+                    metaphor: "🦚 视觉锚定：盯住左侧温室里装菜花的托盘，你会发现托盘后面装饰着**一丛丛极其华丽的绿色孔雀羽毛**！孔雀羽毛就是<span class='highlight'>孔雀绿染料</span>的视觉化，而装蛋黄液的托盘就是<span class='highlight'>罗氏培养基</span>的化身。",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae3843e83_1779347000.webp" 
+                },
+                {
+                    id: 8,
+                    question: "9. 结核分枝杆菌<span class='q-hl'>繁殖速度最慢</span>，在固体培养基上肉眼可见菌落的时间通常是：",
+                    options: ["A. 12～23小时", "B. 24～48小时", "C. 3～5天", "D. 1～2周", "E. 2～4周"],
+                    correctAnswer: 4, 
+                    fact: "🎯 核心事实：结核杆菌的世代时间长达14-20小时，生长极其缓慢，一般需要<span class='highlight'>2-4周（漫长的数周）</span>才能在培养基表面形成肉眼可见的菜花状菌落。",
+                    metaphor: "🕰️ 视觉锚定：就在左侧温室的上方，挂着一只硕大的老旧古董钟表，<span class='highlight'>日历一页一页写着“2-4 weeks”</span>。这只古钟走得极其痛苦缓慢，暗示你结核分离培养是慢工出细活，**没有几周时间根本别想看报告**！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae38cf67d_1779347000.webp" 
+                },
+                {
+                    id: 9,
+                    question: "10. 观察小儿<span class='q-hl'>结核菌素试验（PPD）结果</span>的标准时间是：",
+                    options: ["A. 12～23小时", "B. 24～47小时", "C. 48～72小时", "D. 73～96小时", "E. 1～2周"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：结核菌素试验（PPD）属于IV型（迟发型）超敏反应，皮内注射后应在<span class='highlight'>48～72小时（2-3天）</span>内观察皮肤硬结的反应结果。",
+                    metaphor: "📏 视觉锚定：移步到右侧走廊。地上摆着一把长长的红铜测量尺，上面醒目地雕刻着时钟指针指向<span class='highlight'>48-72 hrs</span>的标志。这是法老钦定的“复盘审判时间”，早了晚了都不作数！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae38f2de8_1779347000.webp" 
+                },
+                {
+                    id: 10,
+                    question: "11. 结核菌素试验（PPD）属于IV型超敏反应，其<span class='q-hl'>结果判定依据</span>是观察皮内的：",
+                    options: ["A. 局部红晕的直径", "B. 局部皮肤硬结的直径", "C. 水疱与溃疡的范围", "D. 红肿与硬结直径的平均值", "E. 全身发热的程度"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：PPD试验判定结果时，<span class='highlight'>必须且仅测量局部硬结的直径</span>，而绝不是测量周围红晕的范围。硬结直径≥5mm判定为阳性。",
+                    metaphor: "🔴 视觉锚定：仔细看右侧走廊地上的那把红铜测量尺。尺子正卡在一个**红肿隆起的坚硬大水泡（硬结）**两端，旁边贴着大大的警告标语：<span class='highlight'>“只测硬结，不测红晕！”</span>，超过5mm就是阳性！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae392fca3_1779347001.webp" 
+                },
+                {
+                    id: 11,
+                    question: "12. 特异性预防结核病所接种的<span class='q-hl'>卡介苗（BCG）</span>，其本质是：",
+                    options: ["A. 经甲醛处理过的人型结核分枝杆菌活菌苗", "B. 保持了免疫原性的减毒牛型结核分枝杆菌活菌苗", "C. 发生了抗原变异的死牛型结核分枝杆菌", "D. 结核分枝杆菌荚膜多糖疫苗", "E. 基因重组的结核蛋白疫苗"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：卡介苗（BCG）是利用<span class='highlight'>减毒的牛型结核分枝杆菌</span>制备的<span class='highlight'>减毒活疫苗</span>，接种对象主要是新生儿和PPD阴性的儿童。",
+                    metaphor: "🥇 视觉锚定：在红铜尺旁边，悬挂着一枚沉甸甸的黄金质感**“C”字牛头功勋奖章**。奖章上的“C”代表卡介苗（BCG），而<span class='highlight'>那个温顺被削弱的牛头</span>，则一针见血地指明了它**“减毒牛型分枝杆菌”**的真实胎记！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae397b367_1779347001.webp" 
+                },
+                {
+                    id: 12,
+                    question: "13. 结核分枝杆菌对理化因素的抵抗力表现为“三耐一敏”，其中<span class='q-hl'>最敏感的物理因素</span>是：",
+                    options: ["A. 干燥环境", "B. 酸碱溶液", "C. 寒冷及低温", "D. 紫外线与湿热", "E. 普通干燥痰液"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：结核杆菌耐干燥、耐酸碱、耐寒冷，但对<span class='highlight'>湿热和紫外线极其敏感</span>，日光直射数小时或煮沸即可被杀灭，常用于病房空气消毒。",
+                    metaphor: "☀️ 视觉锚定：抬头看向右侧走廊的最上方。那里有一扇巨大的玻璃天窗，**炽烈的紫外线阳光与滚烫的湿热蒸汽正源源不断地倾泻下来**。这灼热的光线正是分枝红蜡烛的“终极克星”，能瞬间将其融化、彻底摧毁核酸！",
+                    imageUrl: "https://img.cdn1.vip/i/6a0eae3a028f2_1779347002.webp" 
+                }
+            ];
+
+            let workingQueue = []; 
+            let currentIndex = 0;
+            const totalHitsToWin = 13;
+            let hitsRemaining = totalHitsToWin;
+            
+            let combo = 0;
+            let timerInterval;
+            let timeLeft = 15;
+            let wrongHistory = new Set(); 
+
+            let audioCtx = null;
+            let bgmInterval = null;
+            let isBgmPlaying = false;
+            let customBgmAudio = null;
+
+            // ⚠️ 极其关键的安全音频处理：异步解耦，绝不堵塞主交互线程
+            function initAudio() { 
+                try {
+                    if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+                    if(audioCtx && audioCtx.state === 'suspended') { audioCtx.resume(); } 
+                } catch(e) { console.log("音频上下文暂不支持或受限，已自动开启纯净无音效心流模式"); }
+            }
+
+            function startBGM() {
+                try {
+                    if(isBgmPlaying) return;
+                    isBgmPlaying = true;
+                    if (CustomMedia.bgm) {
+                        if (!customBgmAudio) { customBgmAudio = new Audio(CustomMedia.bgm); customBgmAudio.loop = true; }
+                        customBgmAudio.play().catch(e => console.log("BGM播放被浏览器阻断，静音流无痕运行"));
+                        return;
+                    }
+                    if (!audioCtx) return;
+                    let tick = 0;
+                    bgmInterval = setInterval(() => {
+                        if(!audioCtx || audioCtx.state === 'suspended') return;
+                        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                        osc.connect(gain); gain.connect(audioCtx.destination);
+                        osc.type = 'sine';
+                        if(tick % 4 === 0) { 
+                            osc.frequency.setValueAtTime(100, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                        } else { 
+                            osc.frequency.setValueAtTime(140, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.05); gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                        }
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                        osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.1);
+                        tick++;
+                    }, 600); 
+                } catch(err) { console.log("BGM引擎挂载失败，进入全沉浸静音作战"); }
+            }
+
+            function stopBGM() {
+                isBgmPlaying = false;
+                if (CustomMedia.bgm && customBgmAudio) { try{customBgmAudio.pause(); customBgmAudio.currentTime = 0;}catch(e){} } 
+                else { clearInterval(bgmInterval); }
+            }
+
+            function playTone(type) {
+                try {
+                    if (type === 'correct' && CustomMedia.correct) { new Audio(CustomMedia.correct).play(); return; }
+                    if (type === 'wrong' && CustomMedia.wrong) { new Audio(CustomMedia.wrong).play(); return; }
+                    if (type === 'fever' && CustomMedia.fever) { new Audio(CustomMedia.fever).play(); return; }
+                    if (type === 'win' && CustomMedia.win) { new Audio(CustomMedia.win).play(); return; }
+
+                    if(!audioCtx || audioCtx.state === 'suspended') return;
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    if(type === 'correct') { 
+                        osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                    } else if (type === 'wrong') { 
+                        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                    } else if (type === 'fever') { 
+                        osc.type = 'square'; osc.frequency.setValueAtTime(1200, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(2400, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4); osc.start(); osc.stop(audioCtx.currentTime + 0.4); 
+                    } else if (type === 'win') { 
+                        const freqs = [440, 554, 659, 880, 1108]; 
+                        freqs.forEach((f, i) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.setValueAtTime(0, audioCtx.currentTime + i*0.1); g.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + i*0.1 + 0.05); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i*0.1 + 1.0); o.start(audioCtx.currentTime + i*0.1); o.stop(audioCtx.currentTime + i*0.1 + 1.0); }); 
+                    }
+                } catch(e) {}
+            }
+
+            let particleInterval = null;
+            
+            function startFeverVFX() {
+                if(particleInterval) return;
+                const layer = document.getElementById('vfx-layer');
+                if(!layer) return;
+                particleInterval = setInterval(() => {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+                    p.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                    layer.appendChild(p);
+                    setTimeout(() => p.remove(), 3500);
+                }, 150);
+            }
+
+            function stopFeverVFX() { clearInterval(particleInterval); particleInterval = null; const l = document.getElementById('vfx-layer'); if(l) l.innerHTML = ''; }
+
+            function triggerWinVFX() {
+                const layer = document.getElementById('vfx-layer');
+                if(!layer) return;
+                for(let i=0; i<50; i++) {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = 50 + (Math.random() * 20 - 10) + '%'; p.style.top = 50 + (Math.random() * 20 - 10) + '%';
+                    p.style.width = p.style.height = (Math.random() * 6 + 3) + 'px';
+                    p.style.backgroundColor = `hsl(${Math.random() * 10}, 100%, 60%)`; 
+                    p.style.transform = `translate(${Math.random()*200-100}px, ${Math.random()*200-100}px)`;
+                    p.style.animation = 'floatUp 2s cubic-bezier(0.25, 1, 0.5, 1) forwards';
+                    layer.appendChild(p);
+                }
+                setTimeout(() => { if(layer) layer.innerHTML = ''; }, 2500);
+            }
+
+            // 🏛️ 绝对安全的跳转引擎，优先执行视图切换，音频初始化异步滞后
+            window.startQuiz = function() {
+                try {
+                    // 1. 先雷厉风行切换画面，杜绝拦截
+                    document.getElementById('intro-screen').classList.add('hidden'); 
+                    document.getElementById('end-screen').classList.add('hidden'); 
+                    document.getElementById('quiz-screen').classList.remove('hidden');
+                    document.getElementById('rpg-header').style.display = 'flex';
+                    
+                    // 2. 数据队列重置
+                    workingQueue = [...originalQuizData]; 
+                    hitsRemaining = totalHitsToWin;
+                    currentIndex = 0; 
+                    combo = 0; 
+                    wrongHistory.clear();
+                    
+                    // 3. UI刷新并加载第一题
+                    updateUI();
+                    loadQuestion();
+
+                    // 4. 异步尝试音频挂载（绝不影响主游戏渲染进程）
+                    setTimeout(() => {
+                        initAudio(); 
+                        startBGM();
+                    }, 50);
+
+                } catch (domErr) {
+                    alert("视图容器切换失败: " + domErr.message + "，请确保页面未被恶意魔改或注入。");
+                }
+            };
+
+            window.restartQuiz = function() {
+                clearInterval(timerInterval); stopBGM(); stopFeverVFX();
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+
+                document.getElementById('hp-bar').style.width = '100%'; 
+                document.getElementById('hp-text').innerText = hitsRemaining;
+                document.getElementById('combo-text').classList.remove('show'); 
+                document.body.classList.remove('fever-mode');
+                document.getElementById('feedback-card').classList.remove('show'); 
+                document.getElementById('hint-container').style.display = 'none'; 
+                document.getElementById('hint-btn').style.display = 'none';
+                
+                document.getElementById('end-screen').classList.add('hidden'); 
+                document.getElementById('quiz-screen').classList.add('hidden'); 
+                document.getElementById('rpg-header').style.display = 'none';
+                document.getElementById('intro-screen').classList.remove('hidden');
+            };
+
+            window.goToNext = function() {
+                window.location.href = "#";
+            };
+
+            function updateUI() {
+                document.getElementById('hp-text').innerText = hitsRemaining;
+                document.getElementById('hp-bar').style.width = `${(hitsRemaining / totalHitsToWin) * 100}%`;
+                const cText = document.getElementById('combo-text');
+                if(combo > 0) {
+                    cText.innerText = `Combo x${combo}! 🔥`; cText.classList.add('show');
+                    if(combo >= 3) { document.body.classList.add('fever-mode'); startFeverVFX(); }
+                } else {
+                    cText.classList.remove('show'); document.body.classList.remove('fever-mode'); stopFeverVFX();
+                }
+            }
+
+            function startTimer() {
+                clearInterval(timerInterval); timeLeft = 15; 
+                document.getElementById('time-left').innerText = timeLeft;
+                document.getElementById('timer-badge').classList.remove('danger');
+                timerInterval = setInterval(() => {
+                    timeLeft--; document.getElementById('time-left').innerText = timeLeft;
+                    if(timeLeft <= 5) document.getElementById('timer-badge').classList.add('danger');
+                    if(timeLeft <= 0) { clearInterval(timerInterval); handleTimeout(); }
+                }, 1000);
+            }
+
+            function loadQuestion() {
+                document.getElementById('feedback-card').classList.remove('show'); 
+                document.getElementById('retry-warning').style.display = 'none'; 
+                document.getElementById('hint-container').style.display = 'none';
+                const currentQ = workingQueue[currentIndex];
+                document.getElementById('question-text').innerHTML = currentQ.question;
+                
+                const hBtn = document.getElementById('hint-btn');
+                if (combo >= 1 && currentQ.imageUrl) {
+                    hBtn.style.display = 'block'; hBtn.innerText = `🔍 消耗 1 Combo 刮开视觉线索 (当前 x${combo})`;
+                } else {
+                    hBtn.style.display = 'none';
+                }
+
+                const optContainer = document.getElementById('options-container');
+                optContainer.innerHTML = '';
+                currentQ.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button'); btn.innerText = opt; btn.className = 'option-btn';
+                    btn.onclick = () => window.resolveAnswer(idx, btn);
+                    optContainer.appendChild(btn);
+                });
+                startTimer();
+            }
+
+            window.useHint = function() {
+                if (combo < 1) return;
+                combo--; updateUI();
+                document.getElementById('hint-btn').style.display = 'none'; 
+                document.getElementById('hint-container').style.display = 'block';
+                const hImg = document.getElementById('hint-img');
+                hImg.src = workingQueue[currentIndex].imageUrl; hImg.classList.add('revealed');
+                setTimeout(() => { hImg.classList.remove('revealed'); }, 3000);
+            };
+
+            function handleTimeout() {
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(btn => btn.disabled = true);
+                optionsButtons[currentQ.correctAnswer].classList.add('correct');
+                processResult(false, currentQ);
+            }
+
+            window.resolveAnswer = function(idx, btn) {
+                clearInterval(timerInterval);
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(b => b.disabled = true); 
+                document.getElementById('hint-btn').style.display = 'none';
+
+                const isCorrect = (idx === currentQ.correctAnswer);
+                if (isCorrect) btn.classList.add('correct');
+                else { btn.classList.add('wrong'); optionsButtons[currentQ.correctAnswer].classList.add('correct'); }
+                processResult(isCorrect, currentQ);
+            };
+
+            function processResult(isCorrect, q) {
+                let msg = "";
+                if (isCorrect) {
+                    hitsRemaining--; combo++; playTone(combo >= 3 ? 'fever' : 'correct');
+                    msg = "✅ 击杀成功！大魔王受到重创！";
+                    document.getElementById('retry-warning').style.color = "#2e7d32"; 
+                    document.getElementById('retry-warning').style.background = "#e8f5e9";
+                } else {
+                    combo = 0; wrongHistory.add(q.id); 
+                    const container = document.getElementById('main-container');
+                    container.classList.add('shake'); setTimeout(()=>container.classList.remove('shake'), 400);
+                    workingQueue.push(q); playTone('wrong');
+                    msg = "❌ 技能不稳导致结核菌复活，已重回队伍末尾！";
+                    document.getElementById('retry-warning').style.color = "#c62828"; 
+                    document.getElementById('retry-warning').style.background = "#ffebee";
+                }
+
+                updateUI();
+                document.getElementById('fact-text').innerHTML = q.fact;
+                document.getElementById('metaphor-text').innerHTML = q.metaphor;
+                const fbImg = document.getElementById('feedback-img');
+                if (q.imageUrl) { fbImg.src = q.imageUrl; fbImg.style.display = 'block'; } else { fbImg.style.display = 'none'; }
+                
+                document.getElementById('retry-warning').innerText = msg; 
+                document.getElementById('retry-warning').style.display = 'block';
+                document.getElementById('feedback-card').classList.add('show');
+            }
+
+            window.nextQuestion = function() {
+                currentIndex++;
+                if (hitsRemaining > 0 && currentIndex < workingQueue.length) { loadQuestion(); } 
+                else {
+                    playTone('win'); stopBGM(); stopFeverVFX(); triggerWinVFX(); document.body.classList.remove('fever-mode');
+                    setTimeout(() => {
+                        document.getElementById('quiz-screen').classList.add('hidden'); 
+                        document.getElementById('rpg-header').style.display = 'none';
+                        generateGallery(); 
+                        document.getElementById('end-screen').classList.remove('hidden');
+                    }, 400);
+                }
+            };
+
+            function generateGallery() {
+                const gallery = document.getElementById('wrong-gallery');
+                gallery.innerHTML = ''; 
+                const subtitle = document.getElementById('gallery-subtitle');
+                if (wrongHistory.size === 0) {
+                    subtitle.innerHTML = "<span style='color: var(--correct-color); font-weight: bold;'>🌟 完美收官！赤色防线固若金汤，你已彻底征服结核分枝杆菌！</span>";
+                    return;
+                }
+                subtitle.innerHTML = `以下是你刚刚在密室中遗忘的 <b style="color:var(--primary-color)">${wrongHistory.size}</b> 块灰暗碎片。点击图片，翻转复盘。`;
+                
+                wrongHistory.forEach(id => {
+                    const q = originalQuizData.find(item => item.id === id);
+                    if (!q || !q.imageUrl) return;
+                    const card = document.createElement('div'); card.className = 'gallery-item';
+                    card.innerHTML = `
+                        <div class="gallery-inner">
+                            <div class="gallery-front" style="background-image: url('${q.imageUrl}')"></div>
+                            <div class="gallery-back">
+                                <div class="gallery-back-title">${q.question.replace(/<[^>]+>/g, '').substring(3, 25)}...</div>
+                                <div class="gallery-back-desc">${q.metaphor.replace(/<[^>]+>/g, '')}</div>
+                            </div>
+                        </div>
+                    `;
+                    card.onclick = function() { this.classList.toggle('flipped'); };
+                    gallery.appendChild(card);
+                });
+            }
+        } catch (error) { 
+            alert("底层核心报错，请检查HTML结构是否完整: " + error.message); 
+        }
+    </script>
+</body>
+</html>
