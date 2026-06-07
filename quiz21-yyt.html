@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医小晨 - 衣原体 飞天面包工厂心流版</title>
+    <style>
+        :root {
+            /* 衣原体面包工厂的少女粉奶油云调 */
+            --primary-color: #ec407a; /* 代表粉红奶油云(G-)的主色 */
+            --primary-light: #fce4ec;
+            --primary-dark: #c2185b;
+            --bg-color: #fff5f5; /* 面包店温馨背景 */
+            --card-bg: #ffffff;
+            --correct-color: #43a047;
+            --wrong-color: #e53935;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-lg: 0 15px 35px rgba(236, 64, 122, 0.15);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s;
+            overflow-x: hidden;
+        }
+
+        /* 狂暴模式与氛围特效（粉红奶油心流） */
+        body.fever-mode {
+            background-color: #261016;
+            animation: feverPulse 2s infinite alternate;
+        }
+        @keyframes feverPulse {
+            0% { box-shadow: inset 0 0 50px rgba(236, 64, 122, 0.3); }
+            100% { box-shadow: inset 0 0 150px rgba(236, 64, 122, 0.7); }
+        }
+
+        #vfx-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute; background: rgba(244, 143, 177, 0.8);
+            border-radius: 50%; animation: floatUp linear forwards;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        .app-container {
+            max-width: 600px; width: 100%; background-color: var(--card-bg);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+            overflow: hidden; position: relative; z-index: 10;
+        }
+
+        /* 物理震动反馈 */
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* Boss 血条与 Combo UI */
+        .rpg-header {
+            background-color: #211015; padding: 15px 20px; display: none;
+            flex-direction: column; gap: 8px; border-bottom: 3px solid #000;
+        }
+        .boss-info { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 14px; }
+        .hp-bar-bg { width: 100%; height: 14px; background-color: #3d2029; border-radius: 7px; overflow: hidden; border: 1px solid #000; }
+        .hp-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #f48fb1, #ec407a); width: 100%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(236, 64, 122, 0.8);
+        }
+        .combo-text {
+            color: #ffeb3b; font-style: italic; font-size: 14px; font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s;
+        }
+        .combo-text.show { opacity: 1; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .content-padding { padding: 30px; }
+        .section-title { color: var(--primary-dark); font-size: 22px; margin-bottom: 20px; text-align: center; font-weight: 800; }
+        
+        /* 视频跳转引导卡片 */
+        .video-banner {
+            background: linear-gradient(135deg, #fce4ec, #f8bbd0);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+        .video-banner:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(236, 64, 122, 0.25);
+        }
+        .video-banner-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .video-title {
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-size: 15px;
+        }
+        .video-desc {
+            font-size: 13px;
+            color: #555;
+        }
+        .video-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(236, 64, 122, 0.3);
+            transition: background 0.2s;
+        }
+        .video-banner:hover .video-btn {
+            background: var(--primary-dark);
+        }
+
+        .panorama-img { width: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: 20px; display: block; min-height: 180px; background-color: var(--primary-light); object-fit: cover; }
+
+        /* 结构化介绍区块 */
+        .feature-block {
+            text-align: left; background: #fff; padding: 15px; border-radius: 10px;
+            margin-bottom: 15px; border: 1px solid #eee;
+        }
+        .feature-title { font-weight: bold; color: var(--primary-dark); margin-bottom: 5px; font-size: 15px; }
+        .feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dashed #eee; }
+        .timer-badge { background-color: var(--primary-light); color: var(--primary-dark); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; }
+        .timer-badge.danger { background-color: #fde8e8; color: var(--wrong-color); animation: pulse 1s infinite; }
+        
+        /* 题干与选项样式 */
+        .question-text { font-size: 18px; font-weight: 500; margin-bottom: 25px; line-height: 1.6; color: #34495e; }
+        .q-hl { 
+            font-weight: 800; color: #000; 
+            background: linear-gradient(120deg, rgba(236, 64, 122, 0.2) 0%, rgba(236, 64, 122, 0.2) 100%);
+            background-repeat: no-repeat; background-size: 100% 40%; background-position: 0 88%;
+            padding: 0 2px;
+        }
+
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background-color: #fff; border: 2px solid #eaeded; border-radius: var(--radius-md); padding: 16px 20px; font-size: 16px; color: var(--text-main); text-align: left; cursor: pointer; transition: all 0.2s ease; font-weight: 500;}
+        .option-btn:hover:not(:disabled) { border-color: var(--primary-color); background-color: var(--primary-light); transform: translateY(-2px); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; transform: none; }
+        .option-btn.correct { background-color: #e8f5e9; border-color: var(--correct-color); color: #1b5e20; font-weight: bold; }
+        .option-btn.wrong { background-color: #ffebee; border-color: var(--wrong-color); color: #b71c1c; }
+
+        /* 刮刮乐线索 */
+        .hint-btn {
+            background: none; border: 1px dashed var(--primary-color); color: var(--primary-color);
+            padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; 
+            width: 100%; margin-top: 15px; transition: 0.2s; display: none;
+        }
+        .hint-btn:hover { background: var(--primary-light); }
+        .hint-img-container { display: none; margin-top: 15px; position: relative; border-radius: 8px; overflow: hidden; }
+        .hint-img { width: 100%; filter: blur(15px); transition: filter 0.3s; }
+        .hint-img.revealed { filter: blur(0); }
+        .hint-overlay-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 20px; pointer-events: none; }
+
+        /* 解析区 */
+        .feedback-card { display: none; margin-top: 25px; background-color: var(--card-bg); border: 2px solid var(--primary-light); padding: 20px; border-radius: var(--radius-md); position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.03); animation: slideUpFade 0.5s forwards; }
+        .feedback-card::before { content: ''; position: absolute; left: -2px; top: -2px; bottom: -2px; width: 6px; background-color: var(--primary-color); border-radius: 10px 0 0 10px; }
+        .feedback-card.show { display: block; }
+        .feedback-img { width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; }
+        
+        .highlight { color: var(--primary-dark); font-weight: bold; background: var(--primary-light); padding: 2px 6px; border-radius: 4px; margin: 0 2px; }
+        .fact-text { font-size: 15px; color: #455a64; margin-bottom: 12px; line-height: 1.7; background-color: #f5f7fa; padding: 12px 15px; border-radius: 8px; }
+        .metaphor-text { font-size: 15px; color: #333; line-height: 1.7; padding: 0 5px; }
+        
+        .retry-warning { display: none; margin-top: 15px; padding: 10px; border-radius: 8px; background-color: #fff3e0; color: #e65100; font-size: 14px; font-weight: bold; text-align: center; }
+
+        /* 复盘画廊 */
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
+        .gallery-item { perspective: 1000px; cursor: pointer; height: 160px; }
+        .gallery-inner { width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; border-radius: 12px; box-shadow: var(--shadow-sm); }
+        .gallery-item:hover .gallery-inner { box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .gallery-item.flipped .gallery-inner { transform: rotateY(180deg); }
+        
+        .gallery-front, .gallery-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 12px; overflow: hidden; }
+        .gallery-front { background-size: cover; background-position: center; filter: grayscale(100%) brightness(0.7); transition: filter 0.3s; display: flex; align-items: center; justify-content: center; }
+        .gallery-front::after { content: '点击翻转 🔄'; color: white; background: rgba(236, 64, 122, 0.85); padding: 8px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .gallery-item.flipped .gallery-front { filter: grayscale(0%) brightness(1); } 
+        
+        .gallery-back { background-color: var(--primary-light); transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 2px solid var(--primary-color); }
+        .gallery-back-title { font-size: 13px; font-weight: bold; color: var(--primary-dark); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .gallery-back-desc { font-size: 12px; color: var(--text-main); line-height: 1.5; }
+
+        .primary-btn { width: 100%; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(236, 64, 122, 0.3); margin-top: 15px; }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(236, 64, 122, 0.4); }
+        
+        .secondary-btn { background: #f1f3f5; color: #555; box-shadow: none; margin-top: 10px; font-size: 15px; padding: 14px;}
+        .secondary-btn:hover { background: #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transform: translateY(-1px); }
+
+        .hidden { display: none !important; }
+
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="vfx-layer"></div>
+
+    <div class="app-container" id="main-container">
+        <div class="rpg-header" id="rpg-header">
+            <div class="boss-info">
+                <span>🧁 飞天面包工厂大魔王：衣原体</span>
+                <span class="combo-text" id="combo-text">Combo x3! 🔥</span>
+                <span>剩余HP: <span id="hp-text">12</span></span>
+            </div>
+            <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-bar"></div></div>
+        </div>
+
+        <div id="intro-screen" class="content-padding">
+            <h1 class="section-title">🧁 汤汤的飞天面包工殿探店指南：衣原体</h1>
+
+            <a href="http://xhslink.com/o/8yCpsqEPp7d" class="video-banner" target="_blank">
+                <div class="video-banner-content">
+                    <span class="video-title">▶️ 建议先花3分钟看下这期【衣原体面包工厂记忆宫殿】</span>
+                    <span class="video-desc">粉红奶油云下暗藏杀机，看完剧情和独特发育周期，做题快准狠！ ⸜(๑'ᵕ'๑)⸝⋆*</span>
+                </div>
+                <span class="video-btn">去小红书观看 ↗</span>
+            </a>
+
+            <img class="panorama-img" id="intro-panorama" src="https://img.cdn1.vip/i/6a244c6f7ea61_1780763759.webp" alt="衣原体全景导览图">
+
+            <div class="feature-block">
+                <div class="feature-title">📚 核心高频刷题库</div>
+                <div class="feature-desc">紧扣医学微生物学期末核心考点，全面覆盖原体与始体对决、独特发育周期、沙眼亚种、非淋性尿道炎及用药黑名单。重合重点一网打尽！</div>
+            </div>
+            <div class="feature-block">
+                <div class="feature-title">⚡️ 视觉拟态心流交互</div>
+                <div class="feature-desc">15秒极速挑战，连击可解开面包店的配方线索。闭上眼，把干瘪的形态学指标变成甜甜的面包工坊肌肉记忆 ୧⍢⃝队列</div>
+            </div>
+
+            <button class="primary-btn" onclick="startQuiz()" style="margin-top: 10px;">进入面包工厂 ⚔️</button>
+        </div>
+
+        <div id="quiz-screen" class="content-padding hidden">
+            <div class="header-info">
+                <span style="font-weight: bold; color: var(--primary-color);">🎯 衣原体核心扫荡</span>
+                <div class="timer-badge" id="timer-badge">⏳ <span id="time-left">15</span>s</div>
+            </div>
+
+            <div class="question-text" id="question-text">题目加载中...</div>
+            <div class="options-container" id="options-container"></div>
+            
+            <button class="hint-btn" id="hint-btn" onclick="useHint()">🔍 消耗 1 Combo 刮开视觉配方 (当前 x${combo})</button>
+            <div class="hint-img-container" id="hint-container">
+                <img class="hint-img" id="hint-img" src="">
+                <div class="hint-overlay-text" id="hint-overlay">已刮开 (3秒后变暗)</div>
+            </div>
+
+            <div class="feedback-card" id="feedback-card">
+                <img id="feedback-img" class="feedback-img" src="">
+                <div class="fact-text" id="fact-text"></div>
+                <div class="metaphor-text" id="metaphor-text"></div>
+                <div class="retry-warning" id="retry-warning"></div>
+                <button class="primary-btn" id="next-btn" onclick="nextQuestion()">继续探索工厂 ➡️</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="content-padding hidden">
+            <h1 class="section-title">🎉 工厂探店复盘完成</h1>
+            <p class="section-subtitle" id="gallery-subtitle" style="margin-bottom: 15px;">以下是你刚刚遗忘的灰暗碎片。点击图片，翻转重拾面包工厂的视觉记忆锚点。</p>
+            
+            <div class="gallery-grid" id="wrong-gallery"></div>
+
+            <button class="primary-btn" onclick="goToNext()">🗺️ 开启下一菌战役</button>
+            <button class="primary-btn secondary-btn" onclick="restartQuiz()">🔄 重新探店本关</button>
+
+            <p style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 20px;">
+                视觉锚点重铸完毕。闭上眼睛，满分带走！
+            </p>
+        </div>
+    </div>
+
+    <script>
+        try {
+            const CustomMedia = {
+                introImage: "https://img.cdn1.vip/i/6a244c6f7ea61_1780763759.webp", 
+                bgm: "", correct: "", wrong: "", fever: "", win: ""         
+            };
+
+            // 👁️ 衣原体·完全体核心高频考点题库
+            const originalQuizData = [
+                {
+                    id: 0,
+                    question: "1. 关于衣原体下列说法<span class='q-hl'>错误</span>的是：",
+                    options: ["A. 有细胞壁，革兰染色阴性", "B. 严格细胞内寄生，有独特发育周期", "C. 含有两种核酸，有核糖体", "D. 对多种抗生素如青霉素高度敏感", "E. 不能产生代谢所需的能量（无ATP）"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：衣原体虽有细胞壁（G-），但其<span class='highlight'>细胞壁缺乏肽聚糖</span>，因此作用于细胞壁肽聚糖的交叉联结的<span class='highlight'>青霉素完全无效</span>！",
+                    metaphor: "🧁 视觉锚定：锁定面包店【中央区】。面包工厂的主色调是<span class='highlight'>粉红奶油云</span>，代表它是革兰氏阴性(G-)。重点看中央那个【不插电的烤箱】，它代表衣原体极度特殊的‘穷鬼’属性——自身<span class='highlight'>缺乏能量来源（不能自产ATP）</span>，只能强行偷宿主细胞的电！烤箱里飘着【两根丝带】，代表它同时含有<span class='highlight'>DNA和RNA</span>。最重要的是，烤箱外壳是【3层膜，没有钢筋】，没有钢筋意味着<span class='highlight'>没有肽聚糖</span>，代表防御力高但结构特殊，因此**青霉素神剑砸上去完全无效，被列入黑名单**！",
+                    imageUrl: "https://img.cdn1.vip/i/6a244c6d5fcda_1780763757.webp" 
+                },
+                {
+                    id: 1,
+                    question: "2. 衣原体在细胞外的<span class='q-hl'>感染型</span>，以及在细胞内的<span class='q-hl'>繁殖型</span>形态分别是：",
+                    options: ["A. 始体，原体", "B. 包涵体，内基小体", "C. 原体，网状体（始体）", "D. 原体，包涵体", "E. 始体，包涵体"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：衣原体在细胞外的感染型是<span class='highlight'>原体（EB）</span>，体积小、硬、有高度感染性，无繁殖力；在细胞内的繁殖型是<span class='highlight'>始体（网状体RB）</span>，体积大、软、无感染性，有繁殖力（二分裂）。",
+                    metaphor: "🧁 视觉锚定：拉开【烤箱内部·面包发育魔法流水线】。门外游荡的【小钢珠】就是<span class='highlight'>原体（EB）</span>，它体积小且坚硬，专门在胞外负责四处‘碰瓷’感染；而钻进烤箱吸水膨胀的【胖面团】就是<span class='highlight'>网状始体（RB）</span>，它在胞内软绵绵的，但会开始疯狂进行<span class='highlight'>二分裂繁殖</span>。",
+                    imageUrl: "https://img.cdn1.vip/i/6a244c6dcbc8e_1780763757.webp"
+                },
+                {
+                    id: 2,
+                    question: "3. 首先<span class='q-hl'>成功分离培养出</span>沙眼衣原体的中国学者是：",
+                    options: ["A. 郭霍", "B. 巴斯德", "C. 李斯特", "D. 琴纳", "E. 汤飞凡"],
+                    correctAnswer: 4, 
+                    fact: "🎯 核心事实：世界上首次成功分离并培养出沙眼衣原体的科学家是中国医学家<span class='highlight'>汤飞凡</span>先生（使用鸡胚卵黄囊接种法）。",
+                    metaphor: "🧁 视觉锚定：面包工厂门口立着创始人的巨幅海报——【创始人：汤飞凡】。这家【汤汤的飞天面包工厂】就是为了纪念他首个成功分离沙眼衣原体的伟大贡献。",
+                    imageUrl: "https://img.cdn1.vip/i/6a244cf537185_1780763893.webp"
+                },
+                {
+                    id: 3,
+                    question: "4. 能<span class='q-hl'>阻止溶酶体与吞噬体结合</span>，使衣原体在吞噬体内得以安稳发育的易变异成分是：",
+                    options: ["A. 脂多糖 (LPS)", "B. 肽聚糖", "C. 主要外膜蛋白 (MOMP)", "D. 核心核酸", "E. 鞭毛蛋白"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：衣原体的<span class='highlight'>主要外膜蛋白（MOMP）</span>具有绝对防御机制，能特异性阻止宿主细胞的溶酶体与吞噬体融合，且极易发生变异。",
+                    metaphor: "🧁 视觉锚定：查看【烤箱外围·绝对防御盾牌】。MOMP是套在细菌表面的防御盾，它会散发异性相斥的磁场，死死阻止【清洁工】（<span class='highlight'>溶酶体</span>）靠近吞噬体，不让它进来打扫，细菌才能在里面安稳发酵。",
+                    imageUrl: "https://img.cdn1.vip/i/6a244c71ab66a_1780763761.webp" 
+                },
+                {
+                    id: 4,
+                    question: "5. 沙眼衣原体<span class='q-hl'>A、B、Ba、C亚种</span>主要引起的疾病是：",
+                    options: ["A. 非淋菌性尿道炎", "B. 沙眼", "C. 性病淋巴肉芽肿", "D. 新生儿包涵体结膜炎", "E. 间质性肺炎"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：沙眼衣原体的A、B、Ba、C血清型主要通过眼-眼或眼-手-眼接触传播，引起<span class='highlight'>沙眼</span>，严重可致盲。",
+                    metaphor: "🧁 视觉锚定：推开面包店【左侧橱窗】。这里展示着惊悚的【A-C型沙滩大眼睛】。橱窗表面铺满了‘沙子’（代表<span class='highlight'>沙眼</span>），上面挂着倒钩睫毛（<span class='highlight'>倒睫/结膜瘢痕</span>），旁边还放着一个【危险盲盒】，提醒你如果不注意“眼-手-眼”卫生反复感染，最终会<span class='highlight'>严重致盲</span>！",
+                    imageUrl: "https://img.cdn1.vip/i/6a244c722e117_1780763762.webp" 
+                },
+                {
+                    id: 5,
+                    question: "6. 引起<span class='q-hl'>非淋菌性尿道炎(NGU)</span>最常见的病原体是：",
+                    options: ["A. 解脲脲原体", "B. 淋病奈瑟菌", "C. 梅毒螺旋体", "D. 沙眼衣原体D-K型", "E. 杜克嗜血杆菌"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：沙眼衣原体<span class='highlight'>D-K血清型</span>是引起泌尿生殖道感染（主要是非淋菌性尿道炎）最常见的病原体，可通过性接触或产道传播。",
+                    metaphor: "🧁 视觉锚定：移步至【右侧吧台】。这里摆放着D-K型的【非淋苏打水枪】。水枪疯狂喷水代表<span class='highlight'>泌尿生殖道感染/非淋菌性尿道炎（NGU）</span>。吧台旁边还卖小熊果酱，注意看那个【出生10天的小熊果酱眼】，代表新生儿通过产道感染，会在10天左右引起<span class='highlight'>新生儿包涵体结膜炎</span>。",
+                    imageUrl: "https://img.cdn1.vip/i/6a244c731e3e5_1780763763.webp" 
+                },
+                {
+                    id: 6,
+                    question: "7. 常引起腹股沟淋巴结化脓并<span class='q-hl'>形成特征性瘘管</span>的衣原体是：",
+                    options: ["A. 沙眼衣原体A-C型", "B. 沙眼衣原体D-K型", "C. 沙眼衣原体L1、L2、L3型", "D. 肺炎衣原体", "E. 鹦鹉热衣原体"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：沙眼衣原体<span class='highlight'>L1、L2、L3血清型</span>引起的是<span class='highlight'>性病淋巴肉芽肿（LGV）</span>，典型表现为腹股沟淋巴结化脓性穿破并形成瘘管。",
+                    metaphor: "🧁 视觉锚定：看向面包店【右侧角落】。那里缠绕着一株【L1-L3型的化脓老藤蔓】。藤蔓长成了分叉的【腹股沟形状树杈】（<span class='highlight'>腹股沟淋巴结化脓</span>），树干上有一圈圈【中空滴蜜管道】，液体顺着管子往外漏，这不就是特征性的<span class='highlight'>瘘管（Fistula）</span>吗？",
+                    imageUrl: "https://img.cdn1.vip/i/6a244c7541dfb_1780763765.webp" 
+                },
+                {
+                    id: 7,
+                    question: "8. 与<span class='q-hl'>冠心病、动脉粥样硬化</span>等慢性病发生密切相关的病原体是：",
+                    options: ["A. 沙眼衣原体", "B. 肺炎衣原体", "C. 鹦鹉热衣原体", "D. 肺炎支原体", "E. 兽类衣原体"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：近年来前沿研究发现，<span class='highlight'>肺炎衣原体</span>感染与冠心病、动脉粥样硬化的发病密切相关，其抗体阳性率在患者中显著升高。",
+                    metaphor: "🧁 视觉锚定：抬头看面包店的【咳嗽云朵天花板】。天花板上不断有阵发性干咳吐出的白雾（代表<span class='highlight'>呼吸道传播/非典型肺炎</span>）。最核心的考点是云朵中央吊着一颗【金纹心形红宝石】！红宝石形似人类的心脏与冠状动脉，记住这颗红宝石，它就是<span class='highlight'>冠心病和动脉粥样硬化</span>的病发锚点！",
+                    imageUrl: "https://img.cdn1.vip/i/6a244c75b99f4_1780763765.webp" 
+                },
+                {
+                    id: 8,
+                    question: "9. 除病毒外，可在感染的靶细胞胞质内<span class='q-hl'>形成包涵体</span>的病原体是：",
+                    options: ["A. 支原体", "B. 立克次体", "C. 螺旋体", "D. 细菌", "E. 衣原体"],
+                    correctAnswer: 4, 
+                    fact: "🎯 核心事实：衣原体在宿主细胞内繁衍后，其始体和原体会在空泡内聚集，Giemsa染色或碘染色镜检可见胞质内的<span class='highlight'>包涵体（Inclusion Body）</span>，是临床诊断和辅助诊断（如沙眼）的重要依据。",
+                    metaphor: "🧁 视觉锚定：再次回到烤箱内部的流水线尾端。胖面团们疯狂二分裂后，最终【聚集成大礼包】打包送出，这个堆满了原体和始体的大礼包就是细胞内的<span class='highlight'>包涵体</span>。去店里买面包带大礼包，就像靶细胞里被塞满了包涵体一样！",
+                    imageUrl: "https://img.cdn1.vip/i/6a244c76ddf3a_1780763766.webp" 
+                },
+                {
+                    id: 9,
+                    question: "10. 用于衣原体实验室<span class='q-hl'>分离培养</span>的常规方法是：",
+                    options: ["A. 巧克力血琼脂平板", "B. 严格的普通无生命培养基", "C. 细胞株培养（如McCoy或HEp-2细胞）或鸡胚接种", "D. 鲍-金氏培养基", "E. 罗氏培养基"],
+                    correctAnswer: 2, 
+                    fact: "🎯 核心事实：衣原体属于<span class='highlight'>专性细胞内寄生</span>，在无生命的人工培养基（如血平板）上**绝对不生长**。必须使用活细胞（如McCoy细胞、HEp-2细胞）或鸡胚卵黄囊进行培养。",
+                    metaphor: "🧁 视觉锚定：这对应了烤箱【不插电】的绝对规则。无生命的人工平板就像没有通电的插座，衣原体这个穷鬼在这里根本没办法生存。它必须入侵‘有生命、有电’的活宿主【活细胞/鸡胚】里，强行偷人家的能量才能活。",
+                    imageUrl: "https://img.cdn1.vip/i/6a244c7a9ed58_1780763770.webp" 
+                },
+                {
+                    id: 10,
+                    question: "11. 治疗衣原体感染的<span class='q-hl'>首选大礼包药物</span>应该选择：",
+                    options: ["A. 青霉素G", "B. 链霉素", "C. 头孢曲松", "D. 大环内酯类（如阿奇霉素）或四环素类（如多西环素）", "E. 万古霉素"],
+                    correctAnswer: 3, 
+                    fact: "🎯 核心事实：因为衣原体无肽聚糖且寄生在胞内，治疗首选能渗透进细胞且抑制蛋白质合成的<span class='highlight'>大环内酯类（阿奇霉素/红霉素）</span>或<span class='highlight'>四环素类（多西环素）</span>。",
+                    metaphor: "🧁 视觉锚定：走到【药物收银台】。收银员会指着墙上的通缉令警告你：【绝对禁用青霉素神剑】！因为没有肽聚糖，砍上去毫无效果。想要结账通关，必须购买店内的特调大礼包——一桶代表大环内酯类的【阿奇霉素爆米花】，或几罐代表四环素类的【多西环素易拉罐饮料】。",
+                    imageUrl: "https://img.cdn1.vip/i/6a244c7bab466_1780763771.webp" 
+                },
+                {
+                    id: 11,
+                    question: "12. 引起人畜共患、通过鸟类及禽类传播并导致人类高热、间质性肺炎的病原体是：",
+                    options: ["A. 肺炎衣原体", "B. 鹦鹉热衣原体", "C. 沙眼衣原体", "D. 肺炎支原体", "E. 普氏立克次体"],
+                    correctAnswer: 1, 
+                    fact: "🎯 核心事实：<span class='highlight'>鹦鹉热衣原体</span>以禽类和鸟类为自然宿主，人因接触流产畜、吸入带菌鸟粪或羽毛粉尘而感染，引起人畜共患的鹦鹉热（间质性肺炎）。",
+                    metaphor: "🧁 视觉锚定：店长汤汤在大门口挂了个【外卖提示牌】。上面写着：本店不单卖‘野生家禽派’（代表<span class='highlight'>人畜共患的鹦鹉热衣原体</span>）。如果你从野生鸟语林外卖订购，吸入了鸟类的粉尘，就会引发高热40℃和【鸟疫/间质性肺炎】。记得要用四环素类药物来退烧！",
+                    imageUrl: "https://img.cdn1.vip/i/6a244c7adb807_1780763770.webp" 
+                }
+            ];
+
+            let workingQueue = []; 
+            let currentIndex = 0;
+            const totalHitsToWin = originalQuizData.length;
+            let hitsRemaining = totalHitsToWin;
+            
+            let combo = 0;
+            let timerInterval;
+            let timeLeft = 15;
+            let wrongHistory = new Set(); 
+
+            let audioCtx = null;
+            let bgmInterval = null;
+            let isBgmPlaying = false;
+            let customBgmAudio = null;
+
+            function initAudio() { 
+                if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+                if(audioCtx.state === 'suspended') { audioCtx.resume(); } 
+            }
+
+            function startBGM() {
+                if(isBgmPlaying) return;
+                isBgmPlaying = true;
+                if (CustomMedia.bgm) {
+                    if (!customBgmAudio) { customBgmAudio = new Audio(CustomMedia.bgm); customBgmAudio.loop = true; }
+                    customBgmAudio.play().catch(e => console.log(e));
+                    return;
+                }
+                if (!audioCtx) return;
+                let tick = 0;
+                bgmInterval = setInterval(() => {
+                    if(audioCtx.state === 'suspended') return;
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    if(tick % 4 === 0) { 
+                        osc.frequency.setValueAtTime(140, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                    } else { 
+                        osc.frequency.setValueAtTime(180, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.05); gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                    }
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.1);
+                    tick++;
+                }, 600); 
+            }
+
+            function stopBGM() {
+                isBgmPlaying = false;
+                if (CustomMedia.bgm && customBgmAudio) { customBgmAudio.pause(); customBgmAudio.currentTime = 0; } 
+                else { clearInterval(bgmInterval); }
+            }
+
+            function playTone(type) {
+                if (type === 'correct' && CustomMedia.correct) { new Audio(CustomMedia.correct).play(); return; }
+                if (type === 'wrong' && CustomMedia.wrong) { new Audio(CustomMedia.wrong).play(); return; }
+                if (type === 'fever' && CustomMedia.fever) { new Audio(CustomMedia.fever).play(); return; }
+                if (type === 'win' && CustomMedia.win) { new Audio(CustomMedia.win).play(); return; }
+
+                if(!audioCtx) return;
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                if(type === 'correct') { 
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(988, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1976, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.25, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                } else if (type === 'wrong') { 
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(140, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(90, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.35, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                } else if (type === 'fever') { 
+                    osc.type = 'square'; osc.frequency.setValueAtTime(1300, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(2600, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4); osc.start(); osc.stop(audioCtx.currentTime + 0.4); 
+                } else if (type === 'win') { 
+                    const freqs = [523, 659, 784, 1046, 1318]; 
+                    freqs.forEach((f, i) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.setValueAtTime(0, audioCtx.currentTime + i*0.1); g.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + i*0.1 + 0.05); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i*0.1 + 1.0); o.start(audioCtx.currentTime + i*0.1); o.stop(audioCtx.currentTime + i*0.1 + 1.0); }); 
+                }
+            }
+
+            let particleInterval = null;
+            const vfxLayer = document.getElementById('vfx-layer');
+
+            function startFeverVFX() {
+                if(particleInterval) return;
+                particleInterval = setInterval(() => {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.width = p.style.height = (Math.random() * 5 + 2) + 'px';
+                    p.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                    vfxLayer.appendChild(p);
+                    setTimeout(() => p.remove(), 3500);
+                }, 150);
+            }
+
+            function stopFeverVFX() { clearInterval(particleInterval); particleInterval = null; vfxLayer.innerHTML = ''; }
+
+            function triggerWinVFX() {
+                for(let i=0; i<50; i++) {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = 50 + (Math.random() * 20 - 10) + '%'; p.style.top = 50 + (Math.random() * 20 - 10) + '%';
+                    p.style.width = p.style.height = (Math.random() * 6 + 3) + 'px';
+                    p.style.backgroundColor = `hsl(${Math.random() * 40 + 330}, 100%, 75%)`; // 爆出粉红奶油烟花
+                    p.style.transform = `translate(${Math.random()*200-100}px, ${Math.random()*200-100}px)`;
+                    p.style.animation = 'floatUp 2s cubic-bezier(0.25, 1, 0.5, 1) forwards';
+                    vfxLayer.appendChild(p);
+                }
+                setTimeout(() => { vfxLayer.innerHTML = ''; }, 2500);
+            }
+
+            const introScreen = document.getElementById('intro-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const endScreen = document.getElementById('end-screen');
+            const mainContainer = document.getElementById('main-container');
+            const rpgHeader = document.getElementById('rpg-header');
+            const hpBar = document.getElementById('hp-bar');
+            const hpText = document.getElementById('hp-text');
+            const comboText = document.getElementById('combo-text');
+            const timeLeftSpan = document.getElementById('time-left');
+            const optionsContainer = document.getElementById('options-container');
+            const hintBtn = document.getElementById('hint-btn');
+            const hintContainer = document.getElementById('hint-container');
+            const hintImg = document.getElementById('hint-img');
+            const feedbackCard = document.getElementById('feedback-card');
+            const retryWarning = document.getElementById('retry-warning');
+            const wrongGallery = document.getElementById('wrong-gallery');
+
+            window.startQuiz = function() {
+                initAudio(); startBGM(); 
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+                
+                updateUI();
+                introScreen.classList.add('hidden'); endScreen.classList.add('hidden'); quizScreen.classList.remove('hidden');
+                rpgHeader.style.display = 'flex';
+                loadQuestion();
+            };
+
+            window.restartQuiz = function() {
+                clearInterval(timerInterval); stopBGM(); stopFeverVFX();
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+
+                hpBar.style.width = '100%'; hpText.innerText = hitsRemaining;
+                comboText.classList.remove('show'); document.body.classList.remove('fever-mode');
+                feedbackCard.classList.remove('show'); hintContainer.style.display = 'none'; hintBtn.style.display = 'none';
+                
+                endScreen.classList.add('hidden'); quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                introScreen.classList.remove('hidden');
+            };
+
+            window.goToNext = function() {
+                window.location.href = "#"; // 留空供后续页面跳转
+            };
+
+            function updateUI() {
+                hpText.innerText = hitsRemaining;
+                hpBar.style.width = `${(hitsRemaining / totalHitsToWin) * 100}%`;
+                if(combo > 0) {
+                    comboText.innerText = `Combo x${combo}! 🧁`; comboText.classList.add('show');
+                    if(combo >= 3) { document.body.classList.add('fever-mode'); startFeverVFX(); }
+                } else {
+                    comboText.classList.remove('show'); document.body.classList.remove('fever-mode'); stopFeverVFX();
+                }
+            }
+
+            function startTimer() {
+                clearInterval(timerInterval); timeLeft = 15; timeLeftSpan.innerText = timeLeft;
+                document.getElementById('timer-badge').classList.remove('danger');
+                timerInterval = setInterval(() => {
+                    timeLeft--; timeLeftSpan.innerText = timeLeft;
+                    if(timeLeft <= 5) document.getElementById('timer-badge').classList.add('danger');
+                    if(timeLeft <= 0) { clearInterval(timerInterval); handleTimeout(); }
+                }, 1000);
+            }
+
+            function loadQuestion() {
+                feedbackCard.classList.remove('show'); retryWarning.style.display = 'none'; hintContainer.style.display = 'none';
+                const currentQ = workingQueue[currentIndex];
+                document.getElementById('question-text').innerHTML = currentQ.question;
+                
+                if (combo >= 1 && currentQ.imageUrl) {
+                    hintBtn.style.display = 'block'; hintBtn.innerText = `🔍 消耗 1 Combo 刮开视觉配方 (当前 x${combo})`;
+                } else {
+                    hintBtn.style.display = 'none';
+                }
+
+                optionsContainer.innerHTML = '';
+                currentQ.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button'); btn.innerText = opt; btn.classList.add('option-btn');
+                    btn.onclick = () => window.resolveAnswer(idx, btn);
+                    optionsContainer.appendChild(btn);
+                });
+                startTimer();
+            }
+
+            window.useHint = function() {
+                if (combo < 1) return;
+                combo--; updateUI();
+                hintBtn.style.display = 'none'; hintContainer.style.display = 'block';
+                hintImg.src = workingQueue[currentIndex].imageUrl; hintImg.classList.add('revealed');
+                setTimeout(() => { hintImg.classList.remove('revealed'); }, 3000);
+            };
+
+            function handleTimeout() {
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(btn => btn.disabled = true);
+                optionsButtons[currentQ.correctAnswer].classList.add('correct');
+                processResult(false, currentQ);
+            }
+
+            window.resolveAnswer = function(idx, btn) {
+                clearInterval(timerInterval);
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(b => b.disabled = true); hintBtn.style.display = 'none';
+
+                const isCorrect = (idx === currentQ.correctAnswer);
+                if (isCorrect) btn.classList.add('correct');
+                else { btn.classList.add('wrong'); optionsButtons[currentQ.correctAnswer].classList.add('correct'); }
+                processResult(isCorrect, currentQ);
+            };
+
+            function processResult(isCorrect, q) {
+                let msg = "";
+                if (isCorrect) {
+                    hitsRemaining--; combo++; playTone(combo >= 3 ? 'fever' : 'correct');
+                    msg = "✅ 逻辑闭环！魔王核心防御被撕开！";
+                    retryWarning.style.color = "#2e7d32"; retryWarning.style.background = "#e8f5e9";
+                } else {
+                    combo = 0; wrongHistory.add(q.id); 
+                    mainContainer.classList.add('shake'); setTimeout(()=>mainContainer.classList.remove('shake'), 400);
+                    workingQueue.push(q); playTone('wrong');
+                    msg = "❌ 配方发酵失败，怪物已重生至队列末尾！";
+                    retryWarning.style.color = "#c62828"; retryWarning.style.background = "#ffebee";
+                }
+
+                updateUI();
+                document.getElementById('fact-text').innerHTML = q.fact;
+                document.getElementById('metaphor-text').innerHTML = q.metaphor;
+                const fbImg = document.getElementById('feedback-img');
+                if (q.imageUrl) { fbImg.src = q.imageUrl; fbImg.style.display = 'block'; } else { fbImg.style.display = 'none'; }
+                
+                retryWarning.innerText = msg; retryWarning.style.display = 'block';
+                feedbackCard.classList.add('show');
+            }
+
+            window.nextQuestion = function() {
+                currentIndex++;
+                if (hitsRemaining > 0 && currentIndex < workingQueue.length) { loadQuestion(); } 
+                else {
+                    playTone('win'); stopBGM(); stopFeverVFX(); triggerWinVFX(); document.body.classList.remove('fever-mode');
+                    setTimeout(() => {
+                        quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                        generateGallery(); endScreen.classList.remove('hidden');
+                    }, 400);
+                }
+            };
+
+            function generateGallery() {
+                wrongGallery.innerHTML = ''; const subtitle = document.getElementById('gallery-subtitle');
+                if (wrongHistory.size === 0) {
+                    subtitle.innerHTML = "<span style='color: var(--correct-color); font-weight: bold;'>🌟 完美重铸！飞天面包工厂打卡完美通关，记忆宫殿毫无盲区。</span>";
+                    return;
+                }
+                subtitle.innerHTML = `以下是你刚刚遗忘的 <b style="color:var(--primary-color)">${wrongHistory.size}</b> 块灰暗碎片。点击翻转卡片重拾配方锚点。`;
+                
+                wrongHistory.forEach(id => {
+                    const q = originalQuizData.find(item => item.id === id);
+                    if (!q || !q.imageUrl) return;
+                    const card = document.createElement('div'); card.className = 'gallery-item';
+                    card.innerHTML = `
+                        <div class="gallery-inner">
+                            <div class="gallery-front" style="background-image: url('${q.imageUrl}')"></div>
+                            <div class="gallery-back">
+                                <div class="gallery-back-title">${q.question.replace(/<[^>]+>/g, '').substring(3, 25)}...</div>
+                                <div class="gallery-back-desc">${q.metaphor.replace(/<[^>]+>/g, '')}</div>
+                            </div>
+                        </div>
+                    `;
+                    card.onclick = function() { this.classList.toggle('flipped'); };
+                    wrongGallery.appendChild(card);
+                });
+            }
+        } catch (error) { alert("代码引擎异常: " + error.message); }
+    </script>
+</body>
+</html>
