@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医小晨 - 汉坦病毒发条工坊 沉浸心流版</title>
+    <style>
+        :root {
+            /* 汉坦病毒发条工坊：工业蒸汽朋克与猩红警戒调 */
+            --primary-color: #b71c1c; /* 代表出血热与深红帷幕的主色 */
+            --primary-light: #ffebee;
+            --primary-dark: #7f0000;
+            --bg-color: #f4efe1; /* 复古羊皮纸工业图纸背景 */
+            --card-bg: #ffffff;
+            --correct-color: #2e7d32;
+            --wrong-color: #c62828;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-lg: 0 15px 35px rgba(183, 28, 28, 0.15);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s;
+            overflow-x: hidden;
+        }
+
+        /* 狂暴模式与氛围特效（蒸汽过载） */
+        body.fever-mode {
+            background-color: #1a0f0f;
+            animation: feverPulse 2s infinite alternate;
+        }
+        @keyframes feverPulse {
+            0% { box-shadow: inset 0 0 50px rgba(183, 28, 28, 0.3); }
+            100% { box-shadow: inset 0 0 150px rgba(183, 28, 28, 0.7); }
+        }
+
+        #vfx-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute; background: rgba(183, 28, 28, 0.6);
+            border-radius: 50%; animation: floatUp linear forwards;
+            box-shadow: 0 0 8px rgba(255, 145, 0, 0.5);
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        .app-container {
+            max-width: 600px; width: 100%; background-color: var(--card-bg);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+            overflow: hidden; position: relative; z-index: 10;
+            border: 2px solid #d4c4a8;
+        }
+
+        /* 物理震动反馈 */
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* Boss 血条与 Combo UI */
+        .rpg-header {
+            background-color: #251515; padding: 15px 20px; display: none;
+            flex-direction: column; gap: 8px; border-bottom: 3px solid #000;
+        }
+        .boss-info { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 14px; }
+        .hp-bar-bg { width: 100%; height: 14px; background-color: #4a2828; border-radius: 7px; overflow: hidden; border: 1px solid #000; }
+        .hp-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #d32f2f, #ff1744); width: 100%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(211, 47, 47, 0.8);
+        }
+        .combo-text {
+            color: #ffea00; font-style: italic; font-size: 14px; font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s;
+        }
+        .combo-text.show { opacity: 1; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        .content-padding { padding: 30px; }
+        .section-title { color: var(--primary-dark); font-size: 22px; margin-bottom: 20px; text-align: center; font-weight: 800; }
+        
+        /* 视频跳转引导卡片 */
+        .video-banner {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+        .video-banner:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(183, 28, 28, 0.25);
+        }
+        .video-banner-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .video-title {
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-size: 15px;
+        }
+        .video-desc {
+            font-size: 13px;
+            color: #555;
+        }
+        .video-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(183, 28, 28, 0.3);
+            transition: background 0.2s;
+        }
+        .video-banner:hover .video-btn {
+            background: var(--primary-dark);
+        }
+
+        .panorama-img { width: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: 20px; display: block; min-height: 180px; background-color: var(--primary-light); object-fit: cover; border: 1px solid #e0d0b0; }
+
+        /* 结构化介绍区块 */
+        .feature-block {
+            text-align: left; background: #fff; padding: 15px; border-radius: 10px;
+            margin-bottom: 15px; border: 1px solid #e0e0e0;
+        }
+        .feature-title { font-weight: bold; color: var(--primary-dark); margin-bottom: 5px; font-size: 15px; }
+        .feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dashed #eee; }
+        .timer-badge { background-color: var(--primary-light); color: var(--primary-dark); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; }
+        .timer-badge.danger { background-color: #ffebee; color: var(--wrong-color); animation: pulse 1s infinite; }
+        
+        /* 题干与选项样式 */
+        .question-text { font-size: 18px; font-weight: 500; margin-bottom: 25px; line-height: 1.6; color: #34495e; }
+        .q-hl { 
+            font-weight: 800; color: #000; 
+            background: linear-gradient(120deg, rgba(213, 0, 0, 0.15) 0%, rgba(213, 0, 0, 0.15) 100%);
+            background-repeat: no-repeat; background-size: 100% 40%; background-position: 0 88%;
+            padding: 0 2px;
+        }
+
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background-color: #fff; border: 2px solid #eaeded; border-radius: var(--radius-md); padding: 16px 20px; font-size: 16px; color: var(--text-main); text-align: left; cursor: pointer; transition: all 0.2s ease; font-weight: 500;}
+        .option-btn:hover:not(:disabled) { border-color: var(--primary-color); background-color: var(--primary-light); transform: translateY(-2px); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; transform: none; }
+        .option-btn.correct { background-color: #e8f5e9; border-color: var(--correct-color); color: #1b5e20; font-weight: bold; }
+        .option-btn.wrong { background-color: #ffebee; border-color: var(--wrong-color); color: #b71c1c; }
+
+        /* 辅助线索（刮刮乐） */
+        .hint-btn {
+            background: none; border: 1px dashed var(--primary-color); color: var(--primary-color);
+            padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; 
+            width: 100%; margin-top: 15px; transition: 0.2s; display: none;
+        }
+        .hint-btn:hover { background: var(--primary-light); }
+        .hint-img-container { display: none; margin-top: 15px; position: relative; border-radius: 8px; overflow: hidden; }
+        .hint-img { width: 100%; filter: blur(15px); transition: filter 0.3s; }
+        .hint-img.revealed { filter: blur(0); }
+        .hint-overlay-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 20px; pointer-events: none; }
+
+        /* 解析区 */
+        .feedback-card { display: none; margin-top: 25px; background-color: var(--card-bg); border: 2px solid var(--primary-light); padding: 20px; border-radius: var(--radius-md); position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.03); animation: slideUpFade 0.5s forwards; }
+        .feedback-card::before { content: ''; position: absolute; left: -2px; top: -2px; bottom: -2px; width: 6px; background-color: var(--primary-color); border-radius: 10px 0 0 10px; }
+        .feedback-card.show { display: block; }
+        .feedback-img { width: 100%; border-radius: 8px; margin-bottom: 15px; display: none; border: 1px solid #eee; }
+        
+        .highlight { color: var(--primary-color); font-weight: bold; background: var(--primary-light); padding: 2px 6px; border-radius: 4px; margin: 0 2px; }
+        .fact-text { font-size: 15px; color: #455a64; margin-bottom: 12px; line-height: 1.7; background-color: #f5f7fa; padding: 12px 15px; border-radius: 8px; }
+        .metaphor-text { font-size: 15px; color: #333; line-height: 1.7; padding: 0 5px; }
+        
+        .retry-warning { display: none; margin-top: 15px; padding: 10px; border-radius: 8px; background-color: #fff3e0; color: #e65100; font-size: 14px; font-weight: bold; text-align: center; }
+
+        /* 错题画廊 (通关复盘) */
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
+        .gallery-item { perspective: 1000px; cursor: pointer; height: 160px; }
+        .gallery-inner { width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; border-radius: 12px; box-shadow: var(--shadow-sm); }
+        .gallery-item:hover .gallery-inner { box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .gallery-item.flipped .gallery-inner { transform: rotateY(180deg); }
+        
+        .gallery-front, .gallery-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 12px; overflow: hidden; }
+        .gallery-front { background-size: cover; background-position: center; filter: grayscale(100%) brightness(0.7); transition: filter 0.3s; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd; }
+        .gallery-front::after { content: '点击翻转 🔄'; color: white; background: rgba(183, 28, 28, 0.85); padding: 8px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .gallery-item.flipped .gallery-front { filter: grayscale(0%) brightness(1); } 
+        
+        .gallery-back { background-color: var(--primary-light); transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 2px solid var(--primary-color); }
+        .gallery-back-title { font-size: 13px; font-weight: bold; color: var(--primary-dark); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .gallery-back-desc { font-size: 12px; color: var(--text-main); line-height: 1.5; }
+
+        .primary-btn { width: 100%; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(183, 28, 28, 0.3); margin-top: 15px; }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(183, 28, 28, 0.4); }
+        
+        /* 次级按钮 */
+        .secondary-btn { background: #f1f3f5; color: #555; box-shadow: none; margin-top: 10px; font-size: 15px; padding: 14px;}
+        .secondary-btn:hover { background: #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transform: translateY(-1px); }
+
+        .hidden { display: none !important; }
+
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="vfx-layer"></div>
+
+    <div class="app-container" id="main-container">
+        <div class="rpg-header" id="rpg-header">
+            <div class="boss-info">
+                <span>⚙️ 汉坦病毒发条核心</span>
+                <span class="combo-text" id="combo-text">Combo x3! 🔥</span>
+                <span>剩余HP: <span id="hp-text">14</span></span>
+            </div>
+            <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-bar"></div></div>
+        </div>
+
+        <div id="intro-screen" class="content-padding">
+            <h1 class="section-title">🏭 发条工坊全景解码：汉坦病毒 (HFRS)</h1>
+
+            <a href="http://xhslink.com/o/82zEts8JSdI" class="video-banner" target="_blank">
+                <div class="video-banner-content">
+                    <span class="video-title">▶️ 建议先花3分钟看下这期【汉坦病毒发条工坊电影】</span>
+                    <span class="video-desc">里面加了机械剧情 and 专属齿轮音效，看完再来刷题体验翻倍哦 ⸜(๑'ᵕ'๑)⸝⋆*</span>
+                </div>
+                <span class="video-btn">去小红书观看 ↗</span>
+            </a>
+
+            <img class="panorama-img" id="intro-panorama" src="https://img.cdn1.vip/i/6a2e1cd93bede_1781406937.webp" alt="汉坦病毒发条工坊全景图">
+
+            <div class="feature-block">
+                <div class="feature-title">📚 14大核心题眼梳理</div>
+                <div class="feature-desc">结合期末考试与执医高频考点，拿下肾综合征出血热（HFRS）、致病机制、传播途径及鉴别诊断的所有易错挖坑点。</div>
+            </div>
+            <div class="feature-block">
+                <div class="feature-title">⚡️ 机械心流视觉锚定</div>
+                <div class="feature-desc">15秒限时作答，忘词时可消耗 Combo 刮开视觉线索！用记忆宫殿的图形冲击，把抽象枯燥的微生物考点硬生生烙印在脑海里。</div>
+            </div>
+
+            <button class="primary-btn" onclick="startQuiz()" style="margin-top: 10px;">进入发条工坊 ⚔️</button>
+        </div>
+
+        <div id="quiz-screen" class="content-padding hidden">
+            <div class="header-info">
+                <span style="font-weight: bold; color: var(--primary-color);">🎯 考点全景视觉扫荡</span>
+                <div class="timer-badge" id="timer-badge">⏳ <span id="time-left">15</span>s</div>
+            </div>
+
+            <div class="question-text" id="question-text">题目加载中...</div>
+            <div class="options-container" id="options-container"></div>
+            
+            <button class="hint-btn" id="hint-btn" onclick="useHint()">🔍 消耗 1 Combo 刮开视觉线索</button>
+            <div class="hint-img-container" id="hint-container">
+                <img class="hint-img" id="hint-img" src="">
+                <div class="hint-overlay-text" id="hint-overlay">已刮开 (3秒后变暗)</div>
+            </div>
+
+            <div class="feedback-card" id="feedback-card">
+                <img id="feedback-img" class="feedback-img" src="">
+                <div class="fact-text" id="fact-text"></div>
+                <div class="metaphor-text" id="metaphor-text"></div>
+                <div class="retry-warning" id="retry-warning"></div>
+                <button class="primary-btn" id="next-btn" onclick="nextQuestion()">继续追击 ➡️</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="content-padding hidden">
+            <h1 class="section-title">🎉 发条核心完全攻克！</h1>
+            <p class="section-subtitle" id="gallery-subtitle" style="margin-bottom: 15px;">以下是你刚刚遗忘的灰暗碎片。点击图片，重新点亮发条工坊的视觉锚点并翻转复盘。</p>
+            
+            <div class="gallery-grid" id="wrong-gallery"></div>
+
+            <button class="primary-btn" onclick="goToNext()">🗺️ 开启下一战役</button>
+            <button class="primary-btn secondary-btn" onclick="restartQuiz()">🔄 重置当前关卡</button>
+
+            <p style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 20px;">
+                知识已全部锚定。祝考场秒杀题眼，顺利大捷！
+            </p>
+        </div>
+    </div>
+
+    <script>
+        try {
+            const CustomMedia = {
+                introImage: "https://img.cdn1.vip/i/6a2e1cd93bede_1781406937.webp", 
+                bgm: "",        
+                correct: "",    
+                wrong: "",      
+                fever: "",      
+                win: ""         
+            };
+
+            // 👁️ 汉坦病毒发条工坊·专属视觉题库数据
+            const originalQuizData = [
+                {
+                    id: 0,
+                    question: "1. 汉坦病毒是引起哪一种疾病的<span class='q-hl'>核心病原体</span>？",
+                    options: ["A. 流行性脑脊髓膜炎", "B. 肾综合征出血热 (HFRS)", "C. 假膜性肠炎", "D. 登革出血热 (DHF)", "E. 白血病"],
+                    correctAnswer: 1,
+                    fact: "🎯 核心事实：汉坦病毒（Hantavirus）是引起<span class='highlight'>肾综合征出血热（HFRS）</span>（旧称流行性出血热）的病原体。",
+                    metaphor: "🏛️ 视觉锚定：直接抬头看大门招牌。这间发条工坊的官方全称就是“汉坦病毒（肾综合征出血热HFRS）发条工坊”，这是它的终极身份证明！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1cc70bd7a_1781406919.webp"
+                },
+                {
+                    id: 1,
+                    question: "2. 关于汉坦病毒的<span class='q-hl'>核酸结构与生物学特性</span>，下列哪项描述是正确的？",
+                    options: ["A. 无包膜的单正链RNA病毒", "B. 有包膜的单负链、三分节段RNA病毒", "C. 有包膜的直链双链DNA病毒", "D. 无包膜的双股RNA病毒", "E. 属于无芽胞结构抵抗力最强的DNA病毒"],
+                    correctAnswer: 1,
+                    fact: "🎯 核心事实：汉坦病毒属于布尼亚病毒科，属于<span class='highlight'>有包膜的单负链、三分节段（S, M, L）RNA病毒</span>。",
+                    metaphor: "🔮 视觉锚定：看全局底色和中央引擎。深红丝绒帷幕（单股）上闪烁着**“减号”符号（负链）**；而中央飞船是一个拥有**“蒸汽飞船外壳”（有包膜）**、且由**3个完全独立的发条节段（三分节段）**拼接而成的子弹飞船！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1cc64e11b_1781406918.webp"
+                },
+                {
+                    id: 2,
+                    question: "3. 汉坦病毒在我国及全球发病呈现明显的<span class='q-hl'>季节性高峰</span>，最绝对的高发期是：",
+                    options: ["A. 3月 - 5月春季", "B. 6月 - 8月夏季", "C. 9月 - 10月夏秋交替", "D. 11月至次年1月秋冬季", "E. 全年无明显季节性差异"],
+                    correctAnswer: 3,
+                    fact: "🎯 核心事实：肾综合征出血热（HFRS）发病呈明显的季节性，<span class='highlight'>11月至次年1月为绝对的秋冬季高发期</span>。",
+                    metaphor: "🍂 视觉锚定：看向全局背景的机械窗外。窗外狂风大作、枯叶漫天飞舞，天空中高高悬挂着一块显眼的**“11月”铜牌**，提示进入了过载危险期！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1cc9bd550_1781406921.webp"
+                },
+                {
+                    id: 3,
+                    question: "4. 历史上，汉坦病毒最早是由哪位学者<span class='q-hl'>首次成功分离发现</span>的？",
+                    options: ["A. 德国学者克里米亚", "B. 日本学者黑线姬", "C. 韩国学者李镐汪", "D. 美国学者埃博拉", "E. 法国学者巴斯德"],
+                    correctAnswer: 2,
+                    fact: "🎯 核心事实：1978年，由韩国学者<span class='highlight'>李镐汪</span>首次从黑线姬鼠肺组织中成功分离出汉坦病毒。",
+                    metaphor: "👨‍🔧 视觉锚定：看向创世档案控制台。控制台中央站着一位身穿**朝鲜王朝黑纱帽与韩服的“发条大师”**，其桌上的纯金工牌赫然写着他的名字——**李镐汪**！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1cca223fc_1781406922.webp"
+                },
+                {
+                    id: 4,
+                    question: "5. 关于汉坦病毒在<span class='q-hl'>细胞培养中的特性</span>，下列叙述正确的是：",
+                    options: ["A. 极易导致Vero E6细胞发生严重的裂解变性", "B. 在Vero E6细胞中疯狂增殖，但不引起可见的细胞病变 (无CPE)", "C. 只能在硬蜱外壳的原代细胞中才能缓慢生长", "D. 具有极强的致突变性，可诱发肺癌", "E. 增殖速度极慢，且会凝集大量鹅红细胞导致病变"],
+                    correctAnswer: 1,
+                    fact: "🎯 核心事实：汉坦病毒可在<span class='highlight'>Vero E6细胞</span>中良好增殖，但<span class='highlight'>不引起可见的细胞病变（无CPE）</span>，这是其重要的鉴定考点。",
+                    metaphor: "🚊 视觉锚定：在发条大师李镐汪的身后，有一条晶莹剔透的**“Vero E6晶体轨道”**。虽然病毒飞船在其上疯狂奔驰增殖，但整个轨道**“完好无损、绝不发生破裂”（无CPE病变）**！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1ccb3585d_1781406923.webp"
+                },
+                {
+                    id: 5,
+                    question: "6. 肾综合征出血热（HFRS）的<span class='q-hl'>自然宿主和核心传染源</span>主要是：",
+                    options: ["A. 食草类家畜（如牛、羊）", "B. 节肢动物（如硬蜱、蚊子）", "C. 啮齿类动物（如黑线姬鼠等鼠类）", "D. 犬科及猫科动物", "E. 灵长类哺乳动物"],
+                    correctAnswer: 2,
+                    fact: "🎯 核心事实：汉坦病毒的<span class='highlight'>自然宿主和主要传染源是鼠类</span>（在我国主要是黑线姬鼠和褐家鼠）。",
+                    metaphor: "🐭 视觉锚定：视线移向左侧生产线。传送带的源头是由一个穿着工作服的**“黑线姬鼠老鼠工头”**在死死把持，它就是疯狂往工坊排污的万恶之源！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1ccbddfcd_1781406923.webp"
+                },
+                {
+                    id: 6,
+                    question: "7. 下列哪种途径<span class='q-hl'>不能传播</span>汉坦病毒？（高频期末坑点）",
+                    options: ["A. 经呼吸道吸入含病毒的尘埃", "B. 食入被鼠类排泄物污染的食物和水源", "C. 破损皮肤接触到感染动物的排泄物", "D. 携带病毒的蚊子叮咬", "E. 经胎盘垂直传播给胎儿"],
+                    correctAnswer: 3,
+                    fact: "🎯 核心事实：汉坦病毒可通过<span class='highlight'>呼吸道、消化道、接触（伤口）、胎盘、螨类（虫媒）</span>5大途径传播，但<span class='highlight'>绝对不通过蚊虫叮咬传播</span>！",
+                    metaphor: "🚫 视觉锚定：注意看左侧生产线旁那个**“被液压机砸烂的蚊子玩具”**，上面打着一个巨大的血红色禁止叉（X）。工坊警告：**蚊子绝对不能传播汉坦病毒**！千万别踩中高频干扰项坑点！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1ccd11241_1781406925.webp"
+                },
+                {
+                    id: 7,
+                    question: "8. 预防和控制肾综合征出血热（HFRS）流行<span class='q-hl'>最关键、最有效</span>的自救对策是：",
+                    options: ["A. 广泛喷洒杀虫剂进行防蚊灭蚊", "B. 大规模消灭野外硬蜱", "C. 防鼠灭鼠", "D. 严格禁止食用不浸泡的饺子", "E. 长期口服抗病毒药物进行预防"],
+                    correctAnswer: 2,
+                    fact: "🎯 核心事实：由于鼠类是核心传染源，控制并切断HFRS的最重要措施就是<span class='highlight'>防鼠灭鼠</span>。",
+                    metaphor: "💥 视觉锚定：锁定左侧核心对策区。一台贴着“防鼠灭鼠”标签的**“黄金液压清道夫”**正在疯狂下压，把偷溜进来的老鼠瞬间砸成铁饼。抓住了老鼠，就扼住了整个发条工坊暴走命脉！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1cce5ff09_1781406926.webp"
+                },
+                {
+                    id: 8,
+                    question: "9. 汉坦病毒进入人体后，其<span class='q-hl'>最主要的靶细胞</span>以及发病的始动因素是：",
+                    options: ["A. 肾小球毛细血管上皮细胞", "B. 全身毛细血管内皮细胞", "C. 外周血红细胞", "D. 骨髓白细胞原代细胞", "E. 神经系统胶质细胞"],
+                    correctAnswer: 1,
+                    fact: "🎯 核心事实：汉坦病毒主要侵犯<span class='highlight'>全身毛细血管内皮细胞</span>，导致血管通透性增加、血浆外渗和出血症状。",
+                    metaphor: "🚰 视觉锚定：推开右侧蒸汽管道区大门。这里的核心压力装置是由无数根**“红色水晶管道”（代表毛细血管内皮细胞）**组成的，此时它们正受到病毒疯狂侵袭，在全面崩坏滴水！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1ccf0a3d4_1781406927.webp"
+                },
+                {
+                    id: 9,
+                    question: "10. 肾综合征出血热发病机制极其复杂，临床上哪几种<span class='q-hl'>超敏反应</span>参与了发病并加剧了肾损伤？",
+                    options: ["A. Ⅰ型和Ⅱ型超敏反应", "B. Ⅱ型和Ⅳ型超敏反应", "C. Ⅰ型和Ⅲ型超敏反应", "D. Ⅲ型和Ⅳ型超敏反应", "E. 仅有细胞免疫亢进直接导致"],
+                    correctAnswer: 2,
+                    fact: "🎯 核心事实：HFRS的发病机制中包含免疫病理损伤，其中<span class='highlight'>Ⅰ型（导致血管通透性增高、血浆外渗）</span>和<span class='highlight'>Ⅲ型（免疫复合物沉积导致肾损伤）超敏反应</span>共同参与。",
+                    metaphor: "⚙️ 视觉锚定：观察崩坏的管道机械结构。**【发条机Ⅰ】**超敏反应发作，导致红色水晶管疯狂滴水（血浆外渗）；同时**【发条机Ⅲ】**免疫齿轮彻底卡死卡裂，将其下方的**“肾脏机座”震得剧烈开裂**，造成严重肾损伤！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1cd12a1e7_1781406929.webp"
+                },
+                {
+                    id: 10,
+                    question: "11. 肾综合征出血热（HFRS）在临床上面对麦田劳作易感人群，最经典的<span class='q-hl'>特征性体征</span>是：",
+                    options: ["A. 三红三痛（醉酒貌、头/腰/眼眶痛）", "B. 持续性高热伴全身广泛性红斑", "C. 恐水、畏光、局部肌肉痉挛", "D. 皮肤剥脱呈现“烫伤样”外观", "E. 浅表淋巴结肿大伴随反复咳血"],
+                    correctAnswer: 0,
+                    fact: "🎯 核心事实：HFRS患者典型临床体征为<span class='highlight'>“三红”（脸、颈、胸潮红，呈醉酒貌）</span>和<span class='highlight'>“三痛”（头痛、腰痛、眼眶痛）</span>。",
+                    metaphor: "🌾 视觉锚定：看看右侧麦田里的受害者木偶。它的**脸部、脖子、前胸被刷上了刺眼的红漆（三红，醉酒貌）**，同时几只机械手正**死死捂着它的脑袋、腰部和外凸的眼眶（头痛、腰痛、眼眶痛）**，痛苦不堪！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1cd215434_1781406930.webp"
+                },
+                {
+                    id: 11,
+                    question: "12. 实验室化验检查中，肾综合征出血热（HFRS）患者具有哪些<span class='q-hl'>极限仪表盘极限读数特征</span>？",
+                    options: ["A. 白细胞（WBC）降低，血小板（PLT）升高，血尿", "B. 白细胞（WBC）显著升高，血小板（PLT）急剧降低，伴典型蛋白尿", "C. 白细胞和血小板均无变化，仅尿中出现大量白色泡沫", "D. 红细胞计数断层式暴跌，发生急性溶血", "E. 淋巴细胞计数正常，无异型淋巴细胞出现"],
+                    correctAnswer: 1,
+                    fact: "🎯 核心事实：HFRS患者血液学特征表现为<span class='highlight'>WBC显著升高（甚至出现类白血病反应）、PLT急剧降低（导致皮下出血点）以及严重的肾损伤蛋白尿</span>。",
+                    metaphor: "📊 视觉锚定：扫视底部的化验仪表盘。**【WBC仪表盘】指针直接飙红爆表（显著升高）**，而**【PLT仪表盘】指针直接归零（急剧降低）**，旁边的木偶身上满是皮下出血点，地上那支**【尿液试管】正不断冒出白色泡沫（典型蛋白尿）**！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1cd4be288_1781406932.webp"
+                },
+                {
+                    id: 12,
+                    question: "13. 在临床上，对于汉坦病毒感染患者进行<span class='q-hl'>早期、快速特异性诊断的首选方法</span>是：",
+                    options: ["A. 中和试验检测特异性中和抗体", "B. 免疫荧光染色直接照亮细胞抗原", "C. ELISA捕捉法检测血清中特异性 IgM 抗体", "D. 分离病毒并观察其细胞病变 (CPE)", "E. 进行红细胞凝集抑制试验"],
+                    correctAnswer: 2,
+                    fact: "🎯 核心事实：肾综合征出血热的早期快速诊断，临床上<span class='highlight'>首选ELISA捕捉法检测血清中的特异性IgM抗体</span>。",
+                    metaphor: "🕹️ 视觉锚定：看向安全检测终端。检测台上一台巨大的**“ELISA捕捉夹娃娃机”**伸出机械爪，在血液池里精准地捞起了一枚闪闪发光的**“IgM金币”**！这就是早期诊断的黄金钥匙！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1cd54f57f_1781406933.webp"
+                },
+                {
+                    id: 14,
+                    question: "14. 关于<span class='q-hl'>克里米亚-刚果出血热（新疆出血热）</span>的说法，下列哪项是完全正确的？",
+                    options: ["A. 其主要传染源是家猫和老鼠", "B. 属于一种以硬蜱为主要传播媒介的自然疫源性疾病", "C. 发病机制中完全不涉及超敏反应损伤", "D. 属于无包膜的直链单股DNA病毒", "E. 主要通过消化道和污染的水源进行大面积爆发传播"],
+                    correctAnswer: 1,
+                    fact: "🎯 核心事实：克里米亚-刚果出血热（在我国称为新疆出血热）的<span class='highlight'>传播媒介是硬蜱</span>，属于蜱媒自然疫源性疾病（传染源为野生及家畜动物，而非单纯鼠类）。",
+                    metaphor: "🛡️ 视觉锚定：移步至最后一间危险品陈列柜。角落里陈列着一套**爬满了褐色“发条硬蜱”的重型新疆铠甲**。这提示我们，新疆出血热是靠**硬蜱**虫媒传播的，与汉坦病毒的“黑线工头”有着本质区别！",
+                    imageUrl: "https://img.cdn1.vip/i/6a2e1cd5c717a_1781406933.webp"
+                }
+            ];
+
+            let workingQueue = []; 
+            let currentIndex = 0;
+            const totalHitsToWin = originalQuizData.length;
+            let hitsRemaining = totalHitsToWin;
+            
+            let combo = 0;
+            let timerInterval;
+            let timeLeft = 15;
+            let wrongHistory = new Set(); 
+
+            let audioCtx = null;
+            let bgmInterval = null;
+            let isBgmPlaying = false;
+            let customBgmAudio = null;
+
+            function initAudio() { 
+                if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+                if(audioCtx.state === 'suspended') { audioCtx.resume(); } 
+            }
+
+            function startBGM() {
+                if(isBgmPlaying) return;
+                isBgmPlaying = true;
+                if (CustomMedia.bgm) {
+                    if (!customBgmAudio) { customBgmAudio = new Audio(CustomMedia.bgm); customBgmAudio.loop = true; }
+                    customBgmAudio.play().catch(e => console.log(e));
+                    return;
+                }
+                if (!audioCtx) return;
+                let tick = 0;
+                bgmInterval = setInterval(() => {
+                    if(audioCtx.state === 'suspended') return;
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    if(tick % 4 === 0) { 
+                        osc.frequency.setValueAtTime(90, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.15); gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                    } else { 
+                        osc.frequency.setValueAtTime(130, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.08); gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                    }
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.15);
+                    tick++;
+                }, 700); 
+            }
+
+            function stopBGM() {
+                isBgmPlaying = false;
+                if (CustomMedia.bgm && customBgmAudio) { customBgmAudio.pause(); customBgmAudio.currentTime = 0; } 
+                else { clearInterval(bgmInterval); }
+            }
+
+            function playTone(type) {
+                if (type === 'correct' && CustomMedia.correct) { new Audio(CustomMedia.correct).play(); return; }
+                if (type === 'wrong' && CustomMedia.wrong) { new Audio(CustomMedia.wrong).play(); return; }
+                if (type === 'fever' && CustomMedia.fever) { new Audio(CustomMedia.fever).play(); return; }
+                if (type === 'win' && CustomMedia.win) { new Audio(CustomMedia.win).play(); return; }
+
+                if(!audioCtx) return;
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                if(type === 'correct') { 
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(784, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1568, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.25, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25); osc.start(); osc.stop(audioCtx.currentTime + 0.25); 
+                } else if (type === 'wrong') { 
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(130, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.3); gain.gain.setValueAtTime(0.35, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); 
+                } else if (type === 'fever') { 
+                    osc.type = 'square'; osc.frequency.setValueAtTime(1000, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(2000, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4); osc.start(); osc.stop(audioCtx.currentTime + 0.4); 
+                } else if (type === 'win') { 
+                    const freqs = [392, 494, 587, 784, 988]; 
+                    freqs.forEach((f, i) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.setValueAtTime(0, audioCtx.currentTime + i*0.1); g.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + i*0.1 + 0.05); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i*0.1 + 1.0); o.start(audioCtx.currentTime + i*0.1); o.stop(audioCtx.currentTime + i*0.1 + 1.0); }); 
+                }
+            }
+
+            let particleInterval = null;
+            const vfxLayer = document.getElementById('vfx-layer');
+
+            function startFeverVFX() {
+                if(particleInterval) return;
+                particleInterval = setInterval(() => {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.width = p.style.height = (Math.random() * 5 + 2) + 'px';
+                    p.style.animationDuration = (Math.random() * 2 + 1.2) + 's';
+                    vfxLayer.appendChild(p);
+                    setTimeout(() => p.remove(), 3000);
+                }, 120);
+            }
+
+            function stopFeverVFX() { clearInterval(particleInterval); particleInterval = null; vfxLayer.innerHTML = ''; }
+
+            function triggerWinVFX() {
+                for(let i=0; i<50; i++) {
+                    const p = document.createElement('div'); p.className = 'particle';
+                    p.style.left = 50 + (Math.random() * 20 - 10) + '%'; p.style.top = 50 + (Math.random() * 20 - 10) + '%';
+                    p.style.width = p.style.height = (Math.random() * 6 + 3) + 'px';
+                    p.style.backgroundColor = `hsl(${Math.random() * 40 + 0}, 100%, 50%)`; 
+                    p.style.transform = `translate(${Math.random()*240-120}px, ${Math.random()*240-120}px)`;
+                    p.style.animation = 'floatUp 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards';
+                    vfxLayer.appendChild(p);
+                }
+                setTimeout(() => { vfxLayer.innerHTML = ''; }, 2000);
+            }
+
+            const introScreen = document.getElementById('intro-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const endScreen = document.getElementById('end-screen');
+            const mainContainer = document.getElementById('main-container');
+            const rpgHeader = document.getElementById('rpg-header');
+            const hpBar = document.getElementById('hp-bar');
+            const hpText = document.getElementById('hp-text');
+            const comboText = document.getElementById('combo-text');
+            const timeLeftSpan = document.getElementById('time-left');
+            const optionsContainer = document.getElementById('options-container');
+            const hintBtn = document.getElementById('hint-btn');
+            const hintContainer = document.getElementById('hint-container');
+            const hintImg = document.getElementById('hint-img');
+            const feedbackCard = document.getElementById('feedback-card');
+            const retryWarning = document.getElementById('retry-warning');
+            const wrongGallery = document.getElementById('wrong-gallery');
+
+            window.startQuiz = function() {
+                initAudio(); startBGM(); 
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+                
+                updateUI();
+                introScreen.classList.add('hidden'); endScreen.classList.add('hidden'); quizScreen.classList.remove('hidden');
+                rpgHeader.style.display = 'flex';
+                loadQuestion();
+            };
+
+            window.restartQuiz = function() {
+                clearInterval(timerInterval); stopBGM(); stopFeverVFX();
+                workingQueue = [...originalQuizData]; hitsRemaining = totalHitsToWin;
+                currentIndex = 0; combo = 0; wrongHistory.clear();
+
+                hpBar.style.width = '100%'; hpText.innerText = hitsRemaining;
+                comboText.classList.remove('show'); document.body.classList.remove('fever-mode');
+                feedbackCard.classList.remove('show'); hintContainer.style.display = 'none'; hintBtn.style.display = 'none';
+                
+                endScreen.classList.add('hidden'); quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                introScreen.classList.remove('hidden');
+            };
+
+            window.goToNext = function() {
+                window.location.href = "#";
+            };
+
+            function updateUI() {
+                hpText.innerText = hitsRemaining;
+                hpBar.style.width = `${(hitsRemaining / totalHitsToWin) * 100}%`;
+                if(combo > 0) {
+                    comboText.innerText = `Combo x${combo}! 🔥`; comboText.classList.add('show');
+                    if(combo >= 3) { document.body.classList.add('fever-mode'); startFeverVFX(); }
+                } else {
+                    comboText.classList.remove('show'); document.body.classList.remove('fever-mode'); stopFeverVFX();
+                }
+            }
+
+            function startTimer() {
+                clearInterval(timerInterval); timeLeft = 15; timeLeftSpan.innerText = timeLeft;
+                document.getElementById('timer-badge').classList.remove('danger');
+                timerInterval = setInterval(() => {
+                    timeLeft--; timeLeftSpan.innerText = timeLeft;
+                    if(timeLeft <= 5) document.getElementById('timer-badge').classList.add('danger');
+                    if(timeLeft <= 0) { clearInterval(timerInterval); handleTimeout(); }
+                }, 1000);
+            }
+
+            function loadQuestion() {
+                feedbackCard.classList.remove('show'); retryWarning.style.display = 'none'; hintContainer.style.display = 'none';
+                const currentQ = workingQueue[currentIndex];
+                document.getElementById('question-text').innerHTML = currentQ.question;
+                
+                if (combo >= 1 && currentQ.imageUrl) {
+                    hintBtn.style.display = 'block'; hintBtn.innerText = `🔍 消耗 1 Combo 刮开机械线索 (当前 x${combo})`;
+                } else {
+                    hintBtn.style.display = 'none';
+                }
+
+                optionsContainer.innerHTML = '';
+                currentQ.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button'); btn.innerText = opt; btn.classList.add('option-btn');
+                    btn.onclick = () => window.resolveAnswer(idx, btn);
+                    optionsContainer.appendChild(btn);
+                });
+                startTimer();
+            }
+
+            window.useHint = function() {
+                if (combo < 1) return;
+                combo--; updateUI();
+                hintBtn.style.display = 'none'; hintContainer.style.display = 'block';
+                hintImg.src = workingQueue[currentIndex].imageUrl; hintImg.classList.add('revealed');
+                setTimeout(() => { hintImg.classList.remove('revealed'); }, 3000);
+            };
+
+            function handleTimeout() {
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(btn => btn.disabled = true);
+                optionsButtons[currentQ.correctAnswer].classList.add('correct');
+                processResult(false, currentQ);
+            }
+
+            window.resolveAnswer = function(idx, btn) {
+                clearInterval(timerInterval);
+                const currentQ = workingQueue[currentIndex];
+                const optionsButtons = document.querySelectorAll('.option-btn');
+                optionsButtons.forEach(b => b.disabled = true); hintBtn.style.display = 'none';
+
+                const isCorrect = (idx === currentQ.correctAnswer);
+                if (isCorrect) btn.classList.add('correct');
+                else { btn.classList.add('wrong'); optionsButtons[currentQ.correctAnswer].classList.add('correct'); }
+                processResult(isCorrect, currentQ);
+            };
+
+            function processResult(isCorrect, q) {
+                let msg = "";
+                if (isCorrect) {
+                    hitsRemaining--; combo++; playTone(combo >= 3 ? 'fever' : 'correct');
+                    msg = "✅ 发条结构拆解成功！HP 发生损耗！";
+                    retryWarning.style.color = "#1b5e20"; retryWarning.style.background = "#e8f5e9";
+                } else {
+                    combo = 0; wrongHistory.add(q.id); 
+                    mainContainer.classList.add('shake'); setTimeout(()=>mainContainer.classList.remove('shake'), 400);
+                    workingQueue.push(q); playTone('wrong');
+                    msg = "❌ 核心异常过载，发条组件已重置到传送带末尾！";
+                    retryWarning.style.color = "#b71c1c"; retryWarning.style.background = "#ffebee";
+                }
+
+                updateUI();
+                document.getElementById('fact-text').innerHTML = q.fact;
+                document.getElementById('metaphor-text').innerHTML = q.metaphor;
+                const fbImg = document.getElementById('feedback-img');
+                if (q.imageUrl) { fbImg.src = q.imageUrl; fbImg.style.display = 'block'; } else { fbImg.style.display = 'none'; }
+                
+                retryWarning.innerText = msg; retryWarning.style.display = 'block';
+                feedbackCard.classList.add('show');
+            }
+
+            window.nextQuestion = function() {
+                currentIndex++;
+                if (hitsRemaining > 0 && currentIndex < workingQueue.length) { loadQuestion(); } 
+                else {
+                    playTone('win'); stopBGM(); stopFeverVFX(); triggerWinVFX(); document.body.classList.remove('fever-mode');
+                    setTimeout(() => {
+                        quizScreen.classList.add('hidden'); rpgHeader.style.display = 'none';
+                        generateGallery(); endScreen.classList.remove('hidden');
+                    }, 400);
+                }
+            };
+
+            function generateGallery() {
+                wrongGallery.innerHTML = ''; const subtitle = document.getElementById('gallery-subtitle');
+                if (wrongHistory.size === 0) {
+                    subtitle.innerHTML = "<span style='color: var(--correct-color); font-weight: bold;'>🌟 完美通关！你的视觉记忆天衣无缝，没留下任何过载碎片！</span>";
+                    return;
+                }
+                subtitle.innerHTML = `以下是你刚刚遗忘的 <b style="color:var(--primary-color)">${wrongHistory.size}</b> 块碎裂的发条。点击图纸重新复盘。`;
+                
+                wrongHistory.forEach(id => {
+                    const q = originalQuizData.find(item => item.id === id);
+                    if (!q || !q.imageUrl) return;
+                    const card = document.createElement('div'); card.className = 'gallery-item';
+                    card.innerHTML = `
+                        <div class="gallery-inner">
+                            <div class="gallery-front" style="background-image: url('${q.imageUrl}')"></div>
+                            <div class="gallery-back">
+                                <div class="gallery-back-title">${q.question.replace(/<[^>]+>/g, '').substring(3, 25)}...</div>
+                                <div class="gallery-back-desc">${q.metaphor.replace(/<[^>]+>/g, '')}</div>
+                            </div>
+                        </div>
+                    `;
+                    card.onclick = function() { this.classList.toggle('flipped'); };
+                    wrongGallery.appendChild(card);
+                });
+            }
+        } catch (error) { alert("代码引擎过载异常: " + error.message); }
+    </script>
+</body>
+</html>
